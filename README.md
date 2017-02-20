@@ -1,6 +1,8 @@
 # Spark
 RD in the context of the Spark technology
 
+![Workflow](/images/20170120 Spark et LSST/Diapositive2.PNG)
+
 We simulate objects in the sky
 Each object has following characteristics
 
