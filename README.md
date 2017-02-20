@@ -9,18 +9,28 @@ Each object has following characteristics
 - intrinsic color : uniform on [1 .. 6]
 - red shift : uniform on [0.0 .. 3.0]
 
-- I0 = 500.0
-- effective luminosity: f(intensity, redshift) : el = log(I/I0) * z
+Splitting the sky into patches at the simulation stage
+RAPATCHES = 800
+DECPATCHES = 400
 
+Simulating the CCD
+PIXELS_PER_DEGREE = 4000
+# PIXELS_PER_DEGREE = 16000
+
+TOTALCCDS = 189
+TOTALPIXELS = 3200000000
+
+BACKGROUND = 200.0
+
+SPHERE = 4*np.pi*(180.0/np.pi)**2.0 # = 41 253 °²
 
 Then we construct the image for objects:
-- Gaussian pattern at position. Pixels are filled up to some threshold
+- We apply a gaussian pattern at random position in the sky. 
+      Pixels are filled up to some threshold (ie. up to < 1.0 value)
 - Then we fill the image from simulated objects
+- we also ad a gaussian background
 
-One image:
-- rasize = 180.0 / 100
-- decsize = 90.0 / 100
-
+# Tools
 * object_extension(height):
 
     Compute the maximum extension (in pixels) of a simulated object with a maximum height value
@@ -29,28 +39,32 @@ One image:
 
 * build_simulation_pattern(height, size=None, sigma=SIGMA)
 
-    a 2D grid of pixels as a 2D centered normalized gaussian
+    a 2D grid of pixels as a 2D centered gaussian. All objects share the same width.
 
-SkyObjects are generated randomly over the sky
 
 * simul_one_object(ra0_region, ra1_region, dec0_region, dec1_region)
 
-    simulate one celestial object inside a given region in the sky
+    SkyObjects are generated randomly over the sky (or over a given region of the sky)
+    This function simulates one celestial object inside the specified region in the sky
+    All simulated objects are then stored into a MongoDB database, and
+    an 2D index is created with the ra/dec position of every object
 
+# The Imager class
 The Imager class is responsible of filling an image with the traces of SkyObjects
 When filling the image we extend the raw image size with a margin able to
-receive the complete trace of objects. The size of the margin is computed so as to
-contain all object trace that can touch the base image frame.
-The filling process adds also a background level.
+receive the complete trace of objects that fit to this image. The size of the 
+margin is computed so as to contain all object traces that can touch the base 
+image frame. The filling process adds also a background level.
 
-        Construct a pixel image from the shared database of simulated objects
-        The image is first designed to cover a single patch
-        but has to be extended to contain all complete object traces.
-        - find all objects visible from this region of the sky
-        - compute the max of all object extensions
-        - extend the image to include all extended objects
-        - then produce the object traces
+Construct a pixel image from the shared database of simulated objects
+The image is first designed to cover a single patch but has to be 
+extended to contain all complete object traces.
+- find all objects visible from this region of the sky
+- compute the max of all object extensions
+- extend the image to include all extended objects
+- then produce the object traces
 
+# Detection and discovery step
 
 Now the images has been generated following the simulation model.
 We can now start the discovery process from those images
@@ -60,27 +74,12 @@ We can now start the discovery process from those images
 - find object references matching objects from the reference catalog
 
 
+# Cluster Objects
 General description of a cluster:
 - its position, (row / column)
 - its integrated value
 
-Create a 2D grid of pixels to form a PSF to be applied onto the
-image to detect objects. This pattern has a form of a 2D centered
-normalized gaussian. The size must be odd.
-
-Check if a peak exists at the (r, c) position
-To check if a peak exists:
-- we consider the value at the specified position
-- we verify all values immediately around the specified position are lower
-
-Knowing that a peak exists at the specified position, we capture the cluster around it:
-- loop on the distance from center:
-  - sum pixels at a given distance
-  - increase the distance until the sum falls down below some threshold
-
-Returns integral, radius, geometric center
-
-
+# Detection process
 principle:
 - at every position of the input image:
     - we apply a fix pattern made of one 2D normalized gaussian distribution
@@ -91,8 +90,6 @@ principle:
     - this zone is convoluted with the pattern (convolution product - CP)
     - if the CP is greater than a threshold, the CP is stored at the row/column
         position in a convolution image (CI)
-
-principle:
 - we then start a scan of the convolution image (CI):
     - at every position we detect if there is a peak:
         - we extract a 3x3 region of the CI centered at the current position
@@ -103,4 +100,29 @@ principle:
         - we compute the integral of pixel values of the cluster
 - this list of clusters is returned.
 
+
+
+Create a 2D grid of pixels to form a PSF to be applied onto the
+image so as to detect objects. This pattern has a form of a 2D centered
+normalized gaussian. The size must be odd.
+
+All positions of the original image are convolved with this convolution pattern so as to 
+increase the finesse.
+
+Check if a peak exists at the (r, c) position. To check if a peak exists:
+- we consider the value at the specified position
+- we verify that all values immediately around the specified position are 
+   lower then the peak
+
+Knowing that a peak exists at the specified position, we collect the 
+cluster around it:
+- loop on the distance from center:
+  - sum pixels at a given distance
+  - increase the distance until the sum falls down below some threshold
+
+Returns integral, radius, geometric center
+
+# Discovery
+
+for all clusters found, we find objects from the reference catalog.
 
