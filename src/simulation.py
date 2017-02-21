@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 
-HAS_FUTURES = True
+HAS_FUTURES = False
 HAS_JOBLIB = False
 
 

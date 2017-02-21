@@ -127,3 +127,10 @@ Returns integral, radius, geometric center
 
 for all clusters found, we find objects from the reference catalog.
 
+# Running in parallel
+
+So far two modes for running in parallel has been used
+- the futures module https://docs.python.org/3.4/library/concurrent.futures.html 
+- the joblib module https://pythonhosted.org/joblib/parallel.html#working-with-numerical-data-in-shared-memory-memmaping
+
+In sequential mode, execution time is 338.582 seconds while with any of those is 52 seconds
