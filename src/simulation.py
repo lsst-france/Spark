@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 
-HAS_FUTURES = False
+HAS_FUTURES = True
 HAS_JOBLIB = False
 
 
@@ -13,6 +13,7 @@ import time
 
 import os
 import pymongo
+import pickle
 
 if os.name == 'nt':
     MONGO_URL = r'mongodb://127.0.0.1:27017'
@@ -595,6 +596,11 @@ bgs = dict()
 
 
 def one_image(image_id):
+    global Images
+
+    print('one_image', image_id)
+
+    Images[image_id] = pickle.load(open("../data/image%d.p" % image_id, "rb"))
 
     stepper = Stepper()
 
@@ -641,6 +647,11 @@ def one_image(image_id):
     #========================================================================================
     stepper.show_step('== clusters computed')
 
+
+    client = pymongo.MongoClient(MONGO_URL)
+    lsst = client.lsst
+    stars = lsst.stars
+
     for s in submissions:
         image = s['image']
         clusters = s['clusters']
@@ -666,8 +677,10 @@ def one_image(image_id):
 
         print('  -> ', cluster_found, 'found vs. ', len(clusters), 'clusters in image. Match efficiency', sum(all_matches)/len(clusters))
 
+        """
         image = add_crosses(image, clusters)
         _ = main_ax[r, c].imshow(image, interpolation='none')
+        """
 
     #========================================================================================
     stepper.show_step('full image')
@@ -692,8 +705,6 @@ if __name__ == '__main__':
     if HAS_FUTURES:
         exe = concurrent.futures.ProcessPoolExecutor()
 
-    submissions = []
-
     #========================================================================================
     stepper.show_step("starting simulation")
 
@@ -710,17 +721,20 @@ if __name__ == '__main__':
     region_dec1 = region_dec0 + image_dec_size * 5
     print('simulation region [', region_ra0, ':', region_ra1, ',', region_dec0, ':', region_dec1, ']')
 
+    submissions = []
+
     if HAS_JOBLIB:
-        # n_jobs = num_cores
-        n_jobs = 1
+        n_jobs = num_cores
+        # n_jobs = 1
         submissions = Parallel(n_jobs=n_jobs)\
             (delayed(simul_one_object)(region_ra0, region_ra1, region_dec0, region_dec1) for n in range(NOBJECTS))
     else:
         for n in range(NOBJECTS):
             if HAS_FUTURES:
-                o = exe.submit(simul_one_object(region_ra0, region_ra1, region_dec0, region_dec1))
+                o = exe.submit(simul_one_object, region_ra0, region_ra1, region_dec0, region_dec1)
             else:
                 o = simul_one_object(region_ra0, region_ra1, region_dec0, region_dec1)
+
             submissions.append(o)
 
     #========================================================================================
@@ -744,9 +758,11 @@ if __name__ == '__main__':
     stepper.show_step('Db initialized')
 
     objects = dict()
-    for o in submissions:
+    for s in submissions:
         if HAS_FUTURES:
-            o = o.result()
+            o = s.result()
+        else:
+            o = s
 
         objects[o.id] = o
 
@@ -793,6 +809,9 @@ if __name__ == '__main__':
             image, margin = imager.fill(ra, dec)
 
             Images[image_id] = {'id':image_id, 'ra': ra, 'dec': dec, 'image': image, 'r': r, 'c': c}
+
+            pickle.dump({'id':image_id, 'ra': ra, 'dec': dec, 'image': image, 'r': r, 'c': c}, open("../data/image%d.p" % image_id, "wb"))
+
             image_id += 1
 
             dec += image_dec_size
@@ -801,26 +820,32 @@ if __name__ == '__main__':
     #========================================================================================
     stepper.show_step('all images created')
 
+    submissions = []
+
     if HAS_JOBLIB:
         n_jobs = num_cores
         # n_jobs = 1
         submissions = Parallel(n_jobs=n_jobs) \
             (delayed(one_image)(image_id) for image_id in range(4))
     else:
-        for img_id in Images:
+        for img_id in range(4):
+            print(img_id)
             if HAS_FUTURES:
-                o = exe.submit(one_image(image_id))
+                s = exe.submit(one_image, img_id)
             else:
-                o = one_image(img_id)
-            submissions.append(o)
+                s = one_image(img_id)
+            submissions.append(s)
 
-        for o in submissions:
+        for s in submissions:
             if HAS_FUTURES:
-                o = o.result()
+                o = s.result()
+            else:
+                o = s
+
 
 
     #========================================================================================
     stepper.show_step('Done')
 
-    plt.show()
+    # plt.show()
 
