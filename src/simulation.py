@@ -792,7 +792,7 @@ if __name__ == '__main__':
     ra = RA0
     for r in range(IMAGES_IN_RA):
         dec = DEC0
-        for c in range(IMAGES_IN_RA):
+        for c in range(IMAGES_IN_DEC):
             image, margin = imager.fill(ra, dec)
 
             dataset = {'id':image_id, 'ra': ra, 'dec': dec, 'image': image, 'r': r, 'c': c}
