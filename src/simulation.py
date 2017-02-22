@@ -52,7 +52,7 @@ We find all objects
 """
 
 # Object number to simulate
-NOBJECTS = 10000
+NOBJECTS = 100000
 
 # Basic intensity
 INTENSITY0 = 100000.0
@@ -65,9 +65,19 @@ DECPATCHES = 400
 SIGMA = 4.0
 
 # Simulating the CCD
-PIXELS_PER_DEGREE = 4000
+PIXELS_PER_DEGREE = 8000
 # PIXELS_PER_DEGREE = 16000
 # 4000 pixels = 0,2253744679276044 °
+
+# Simulation region
+RA0 = -20.0
+DEC0 = 20
+IMAGES_IN_RA = 3
+IMAGES_IN_DEC = 2
+
+# we consider that all images cover exactly one patch
+IMAGE_RA_SIZE = 180.0 / RAPATCHES
+IMAGE_DEC_SIZE = 90.0 / DECPATCHES
 
 TOTALCCDS = 189
 TOTALPIXELS = 3200000000
@@ -220,12 +230,8 @@ class Imager(object):
         image_x = int(image_ra * PIXELS_PER_DEGREE)
         image_y = int(image_dec * PIXELS_PER_DEGREE)
 
-        # we consider that all images cover exactly one patch
-        image_ra_size = 180.0 / RAPATCHES
-        image_dec_size = 90.0 / DECPATCHES
-
-        image_x_size = int(image_ra_size * PIXELS_PER_DEGREE)
-        image_y_size = int(image_dec_size * PIXELS_PER_DEGREE)
+        image_x_size = int(IMAGE_RA_SIZE * PIXELS_PER_DEGREE)
+        image_y_size = int(IMAGE_DEC_SIZE * PIXELS_PER_DEGREE)
 
         # print('image size: ', image_x_size, image_y_size)
 
@@ -288,8 +294,8 @@ class Imager(object):
         # create the extended image and fill it with a background level
         image = np.random.rand(image_x_size, image_y_size) * BACKGROUND
 
-        print('image [', ra, ':', ra + image_ra_size, ',',
-              dec, ':', dec + image_dec_size, ']',
+        print('image [', ra, ':', ra + IMAGE_RA_SIZE, ',',
+              dec, ':', dec + IMAGE_DEC_SIZE, ']',
               len(objects_in_image), 'objects in this image')
 
         # fill the image with all object traces
@@ -691,17 +697,17 @@ if __name__ == '__main__':
     #========================================================================================
     stepper.show_step("starting simulation")
 
-    # Image
-    ra0 = -20.0
-    dec0 = 20
-    image_ra_size = 180.0 / RAPATCHES
-    image_dec_size = 90.0 / DECPATCHES
+    """
+    We simulate a sky region extended by one image width
+    besides the basic IMAGES_IN_RA x IMAGES_IN_DEC
+    """
 
-    region_ra0 = ra0 - image_ra_size * 2
-    region_ra1 = region_ra0 + image_ra_size * 5
+    region_ra0 = RA0 - IMAGE_RA_SIZE
+    region_ra1 = region_ra0 + IMAGE_RA_SIZE * (IMAGES_IN_RA + 2)
 
-    region_dec0 = dec0 - image_dec_size * 2
-    region_dec1 = region_dec0 + image_dec_size * 5
+    region_dec0 = DEC0 - IMAGE_DEC_SIZE
+    region_dec1 = region_dec0 + IMAGE_DEC_SIZE * (IMAGES_IN_DEC + 2)
+
     print('simulation region [', region_ra0, ':', region_ra1, ',', region_dec0, ':', region_dec1, ']')
 
     submissions = []
@@ -783,10 +789,10 @@ if __name__ == '__main__':
     imager = Imager(objects)
 
     image_id = 0
-    ra = ra0
-    for r in range(2):
-        dec = dec0
-        for c in range(2):
+    ra = RA0
+    for r in range(IMAGES_IN_RA):
+        dec = DEC0
+        for c in range(IMAGES_IN_RA):
             image, margin = imager.fill(ra, dec)
 
             dataset = {'id':image_id, 'ra': ra, 'dec': dec, 'image': image, 'r': r, 'c': c}
@@ -795,8 +801,8 @@ if __name__ == '__main__':
 
             image_id += 1
 
-            dec += image_dec_size
-        ra += image_ra_size
+            dec += IMAGE_DEC_SIZE
+        ra += IMAGE_RA_SIZE
 
     #========================================================================================
     stepper.show_step('all images created')
@@ -822,10 +828,10 @@ if __name__ == '__main__':
     s_id = 0
 
     if SHOW_GRAPHICS:
-        _, axes = plt.subplots(2, 2)
+        _, axes = plt.subplots(IMAGES_IN_RA, IMAGES_IN_DEC)
 
-    for r in range(2):
-        for c in range(2):
+    for r in range(IMAGES_IN_RA):
+        for c in range(IMAGES_IN_DEC):
             s = submissions[s_id]
             if HAS_FUTURES:
                 image = s.result()
