@@ -596,28 +596,30 @@ def add_crosses(image, clusters):
         peaks[rnum, cnum - x:cnum + x + 1] = image[rnum, cnum]
     return peaks
 
+class Dataset:
+    def __init__(self, image_id, ra, dec, image, r, c):
+        self.image_id = image_id
+        self.ra = ra
+        self.dec = dec
+        self.image = image
+        self.r = r
+        self.c = c
 
 def one_image(image_id):
     print('starting one_image', image_id)
 
-    dataset1 = pickle.load(open("../data/image%d.p" % image_id, "rb"))
+    dataset = pickle.load(open("../data/image%d.p" % image_id, "rb"))
 
     stepper = Stepper()
 
-    ra = dataset1['ra']
-    dec = dataset1['dec']
-    image = dataset1['image']
-    r = dataset1['r']
-    c = dataset1['c']
-    background, dispersion, x, y = compute_background(image)
+    image_id = dataset.image_id
+    ra = dataset.ra
+    dec = dataset.dec
+    image = dataset.image
+    r = dataset.r
+    c = dataset.c
 
-    dataset2 = {'ra': ra,
-                'dec': dec,
-                'image': image,
-                'background': background,
-                'dispersion': dispersion,
-                'r': r,
-                'c': c}
+    background, dispersion, x, y = compute_background(image)
 
     max_y = np.max(y)
     print('max y', max_y, 'background', background, 'dispersion', dispersion)
@@ -625,31 +627,15 @@ def one_image(image_id):
     #========================================================================================
     stepper.show_step('background computed')
 
-    ra = dataset2['ra']
-    dec = dataset2['dec']
-    image = dataset2['image']
-    background = dataset2['background']
-    dispersion = dataset2['dispersion']
-    r = dataset2['r']
-    c = dataset2['c']
-
     clustering = Clustering(ra, dec)
     clusters = clustering(image, background, dispersion)
-
-    dataset3 = {'clusters':clusters, 'image':image, 'r':r, 'c':c}
 
     #========================================================================================
     stepper.show_step('== clusters computed')
 
-
     client = pymongo.MongoClient(MONGO_URL)
     lsst = client.lsst
     stars = lsst.stars
-
-    image = dataset3['image']
-    clusters = dataset3['clusters']
-    r = dataset3['r']
-    c = dataset3['c']
 
     radius = 0.0004
     cluster_found = 0
@@ -795,7 +781,7 @@ if __name__ == '__main__':
         for c in range(IMAGES_IN_DEC):
             image, margin = imager.fill(ra, dec)
 
-            dataset = {'id':image_id, 'ra': ra, 'dec': dec, 'image': image, 'r': r, 'c': c}
+            dataset = Dataset(image_id, ra, dec, image, r, c)
 
             pickle.dump(dataset, open("../data/image%d.p" % image_id, "wb"))
 
