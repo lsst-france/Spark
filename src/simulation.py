@@ -815,7 +815,7 @@ if __name__ == '__main__':
         submissions = Parallel(n_jobs=n_jobs) \
             (delayed(one_image)(image_id) for image_id in range(4))
     else:
-        for img_id in range(4):
+        for img_id in range(IMAGES_IN_RA*IMAGES_IN_DEC):
             if HAS_FUTURES:
                 s = exe.submit(one_image, img_id)
             else:
