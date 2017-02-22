@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 
-HAS_FUTURES = False
+HAS_FUTURES = True
 HAS_JOBLIB = False
-
+SHOW_GRAPHICS = False
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -52,7 +52,7 @@ We find all objects
 """
 
 # Object number to simulate
-NOBJECTS = 4000
+NOBJECTS = 10000
 
 # Basic intensity
 INTENSITY0 = 100000.0
@@ -62,7 +62,7 @@ RAPATCHES = 800
 DECPATCHES = 400
 
 # Dispersion for the simulator
-SIGMA = 5.0
+SIGMA = 4.0
 
 # Simulating the CCD
 PIXELS_PER_DEGREE = 4000
@@ -591,35 +591,27 @@ def add_crosses(image, clusters):
     return peaks
 
 
-Images = dict()
-bgs = dict()
-
-
 def one_image(image_id):
-    global Images
+    print('starting one_image', image_id)
 
-    print('one_image', image_id)
-
-    Images[image_id] = pickle.load(open("../data/image%d.p" % image_id, "rb"))
+    dataset1 = pickle.load(open("../data/image%d.p" % image_id, "rb"))
 
     stepper = Stepper()
 
-    img = Images[image_id]
-
-    ra = img['ra']
-    dec = img['dec']
-    image = img['image']
-    r = img['r']
-    c = img['c']
+    ra = dataset1['ra']
+    dec = dataset1['dec']
+    image = dataset1['image']
+    r = dataset1['r']
+    c = dataset1['c']
     background, dispersion, x, y = compute_background(image)
 
-    bgs[image_id] = {'ra': ra,
-                  'dec': dec,
-                  'image': image,
-                  'background': background,
-                  'dispersion': dispersion,
-                  'r': r,
-                  'c': c}
+    dataset2 = {'ra': ra,
+                'dec': dec,
+                'image': image,
+                'background': background,
+                'dispersion': dispersion,
+                'r': r,
+                'c': c}
 
     max_y = np.max(y)
     print('max y', max_y, 'background', background, 'dispersion', dispersion)
@@ -627,22 +619,18 @@ def one_image(image_id):
     #========================================================================================
     stepper.show_step('background computed')
 
-    submissions = []
+    ra = dataset2['ra']
+    dec = dataset2['dec']
+    image = dataset2['image']
+    background = dataset2['background']
+    dispersion = dataset2['dispersion']
+    r = dataset2['r']
+    c = dataset2['c']
 
-    for bg_id in bgs:
-        bg = bgs[bg_id]
+    clustering = Clustering(ra, dec)
+    clusters = clustering(image, background, dispersion)
 
-        ra = bg['ra']
-        dec = bg['dec']
-        image = bg['image']
-        background = bg['background']
-        dispersion = bg['dispersion']
-        r = bg['r']
-        c = bg['c']
-        clustering = Clustering(ra, dec)
-        clusters = clustering(image, background, dispersion)
-
-        submissions.append({'clusters':clusters, 'image':image, 'r':r, 'c':c})
+    dataset3 = {'clusters':clusters, 'image':image, 'r':r, 'c':c}
 
     #========================================================================================
     stepper.show_step('== clusters computed')
@@ -652,35 +640,34 @@ def one_image(image_id):
     lsst = client.lsst
     stars = lsst.stars
 
-    for s in submissions:
-        image = s['image']
-        clusters = s['clusters']
-        r = s['r']
-        c = s['c']
+    image = dataset3['image']
+    clusters = dataset3['clusters']
+    r = dataset3['r']
+    c = dataset3['c']
 
-        radius = 0.0004
-        cluster_found = 0
-        all_matches = []
-        for cid, cluster in enumerate(clusters):
-            found = False
-            matches = 0
-            for oid, o in enumerate(stars.find({'center': {'$geoWithin': {'$centerSphere': [[cluster.ra(), cluster.dec()], radius]}}},
-                                {'_id': 0, 'where': 1, 'center': 1})):
-                if not found:
-                    cluster_found += 1
-                    found = True
+    radius = 0.0004
+    cluster_found = 0
+    all_matches = []
+    for cid, cluster in enumerate(clusters):
+        found = False
+        matches = 0
+        for oid, o in enumerate(stars.find({'center': {'$geoWithin': {'$centerSphere': [[cluster.ra(), cluster.dec()], radius]}}},
+                            {'_id': 0, 'where': 1, 'center': 1})):
+            if not found:
+                cluster_found += 1
+                found = True
 
-                matches += 1
+            matches += 1
 
-                # print('image [', r, c, '] star found (clusterid:', cid, ') object id:', oid, ') (object:', o)
-            all_matches.append(matches)
+            # print('image [', r, c, '] star found (clusterid:', cid, ') object id:', oid, ') (object:', o)
+        all_matches.append(matches)
 
-        print('  -> ', cluster_found, 'found vs. ', len(clusters), 'clusters in image. Match efficiency', sum(all_matches)/len(clusters))
+    print('  -> ', cluster_found, 'found vs. ', len(clusters), 'clusters in image. Match efficiency', sum(all_matches)/len(clusters))
 
-        """
-        image = add_crosses(image, clusters)
-        _ = main_ax[r, c].imshow(image, interpolation='none')
-        """
+    """
+    image = add_crosses(image, clusters)
+    _ = main_ax[r, c].imshow(image, interpolation='none')
+    """
 
     #========================================================================================
     stepper.show_step('full image')
@@ -688,11 +675,7 @@ def one_image(image_id):
     return image
 
 
-
-
 if __name__ == '__main__':
-    #global Images
-
     stepper = Stepper()
 
     """
@@ -797,8 +780,6 @@ if __name__ == '__main__':
     (ie. when no one simulated pixel will reach the region)
     """
 
-    _, main_ax = plt.subplots(2, 2)
-
     imager = Imager(objects)
 
     image_id = 0
@@ -808,9 +789,9 @@ if __name__ == '__main__':
         for c in range(2):
             image, margin = imager.fill(ra, dec)
 
-            Images[image_id] = {'id':image_id, 'ra': ra, 'dec': dec, 'image': image, 'r': r, 'c': c}
+            dataset = {'id':image_id, 'ra': ra, 'dec': dec, 'image': image, 'r': r, 'c': c}
 
-            pickle.dump({'id':image_id, 'ra': ra, 'dec': dec, 'image': image, 'r': r, 'c': c}, open("../data/image%d.p" % image_id, "wb"))
+            pickle.dump(dataset, open("../data/image%d.p" % image_id, "wb"))
 
             image_id += 1
 
@@ -829,23 +810,36 @@ if __name__ == '__main__':
             (delayed(one_image)(image_id) for image_id in range(4))
     else:
         for img_id in range(4):
-            print(img_id)
             if HAS_FUTURES:
                 s = exe.submit(one_image, img_id)
             else:
                 s = one_image(img_id)
             submissions.append(s)
 
-        for s in submissions:
+    #========================================================================================
+    stepper.show_step('All images computed.')
+
+    s_id = 0
+
+    if SHOW_GRAPHICS:
+        _, axes = plt.subplots(2, 2)
+
+    for r in range(2):
+        for c in range(2):
+            s = submissions[s_id]
             if HAS_FUTURES:
-                o = s.result()
+                image = s.result()
             else:
-                o = s
+                image = s
 
+            if SHOW_GRAPHICS:
+                axes[r, c].imshow(image)
 
+            s_id += 1
 
     #========================================================================================
     stepper.show_step('Done')
 
-    # plt.show()
+    if SHOW_GRAPHICS:
+        plt.show()
 
