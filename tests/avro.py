@@ -54,14 +54,19 @@ def create_images(spark):
     # save regions
     df.write.format("com.databricks.spark.avro").mode("overwrite").save("./images")
 
+def analyze(x):
+    return 'analyze image', x[0]
+
 def read_images(spark):
     print("========================================= read back data")
     df = spark.read.format("com.databricks.spark.avro").load("./images")
     # df.show()
 
-    rdd = df.rdd.map(lambda x: np.array(x.image))
+    rdd = df.rdd.map(lambda x: (x.id, x.r, x.c, np.array(x.image)))
 
-    print(rdd.take(2))
+    print(rdd.take(1))
+    result = rdd.map(lambda x: analyze(x)).collect()
+    print(result)
 
 
 read_images(spark)
