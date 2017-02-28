@@ -4,7 +4,8 @@
 
 HAS_FUTURES = True
 HAS_JOBLIB = False
-SHOW_GRAPHICS = False
+SHOW_GRAPHICS = True
+HAS_MONGODB = False
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -12,7 +13,8 @@ from scipy.optimize import curve_fit
 import time
 
 import os
-import pymongo
+if HAS_MONGODB:
+    import pymongo
 import pickle
 
 if os.name == 'nt':
@@ -633,9 +635,10 @@ def one_image(image_id):
     #========================================================================================
     stepper.show_step('== clusters computed')
 
-    client = pymongo.MongoClient(MONGO_URL)
-    lsst = client.lsst
-    stars = lsst.stars
+    if HAS_MONGODB:
+        client = pymongo.MongoClient(MONGO_URL)
+        lsst = client.lsst
+        stars = lsst.stars
 
     radius = 0.0004
     cluster_found = 0
@@ -715,19 +718,21 @@ if __name__ == '__main__':
     #========================================================================================
     stepper.show_step('all submissions done')
 
-    client = pymongo.MongoClient(MONGO_URL)
-    lsst = client.lsst
+    stars = None
+    if HAS_MONGODB:
+        client = pymongo.MongoClient(MONGO_URL)
+        lsst = client.lsst
 
-    recreate = True
+        recreate = True
 
-    if recreate:
-        try:
-            stars = lsst.stars
-            lsst.drop_collection('stars')
-        except:
-            pass
+        if recreate:
+            try:
+                stars = lsst.stars
+                lsst.drop_collection('stars')
+            except:
+                pass
 
-    stars = lsst.stars
+        stars = lsst.stars
 
     #========================================================================================
     stepper.show_step('Db initialized')
@@ -744,27 +749,28 @@ if __name__ == '__main__':
     # ========================================================================================
     stepper.show_step('all objects created {}'.format(NOBJECTS))
 
-    for o_id in objects:
-        o = objects[o_id]
+    if HAS_MONGODB:
+        for o_id in objects:
+            o = objects[o_id]
 
-        object = o.to_db()
+            object = o.to_db()
 
-        object['center'] = {'type': 'Point', 'coordinates': [o.ra, o.dec]}
-        try:
-            id = stars.insert_one(object)
-            # print('object inserted', o.ra, o.dec)
-        except Exception as e:
-            print('oops')
-            print(e.message)
-            sys.exit()
+            object['center'] = {'type': 'Point', 'coordinates': [o.ra, o.dec]}
+            try:
+                id = stars.insert_one(object)
+                # print('object inserted', o.ra, o.dec)
+            except Exception as e:
+                print('oops')
+                print(e.message)
+                sys.exit()
 
-    #========================================================================================
-    stepper.show_step('all objects inserted')
+        #========================================================================================
+        stepper.show_step('all objects inserted')
 
-    stars.create_index([('center', '2dsphere')])
+        stars.create_index([('center', '2dsphere')])
 
-    #========================================================================================
-    stepper.show_step('2D index created')
+        #========================================================================================
+        stepper.show_step('2D index created')
 
     """
     now we select a region of the sky
