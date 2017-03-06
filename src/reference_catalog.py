@@ -34,13 +34,13 @@ class SkyObject(object):
             self.id = ObjectId
             ObjectId += 1
         else:
-            self.ra = obj['ra']
-            self.dec = obj['dec']
-            self.intensity = obj['intensity']
-            self.color = obj['color']
-            self.redshift = obj['redshift']
-            self.luminosity = obj['luminosity']
-            self.id = obj['id']
+            self.ra = odb['ra']
+            self.dec = odb['dec']
+            self.intensity = odb['intensity']
+            self.color = odb['color']
+            self.redshift = odb['redshift']
+            self.luminosity = odb['luminosity']
+            self.id = odb['id']
 
     def to_db(self):
         obj = dict()
