@@ -1,11 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-
-HAS_FUTURES = True
-HAS_JOBLIB = False
-SHOW_GRAPHICS = True
-HAS_MONGODB = False
+import job
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -13,97 +9,8 @@ from scipy.optimize import curve_fit
 import time
 
 import os
-if HAS_MONGODB:
-    import pymongo
-import pickle
-
-if os.name == 'nt':
-    MONGO_URL = r'mongodb://127.0.0.1:27017'
-
-if HAS_FUTURES:
-    import concurrent.futures
-
-if HAS_JOBLIB:
-    from joblib import Parallel, delayed
-    import multiprocessing
-    num_cores = multiprocessing.cpu_count()
-
-"""
-We simulate objects in the sky
-Each object has following characteristics
-
-- position (ra, dec) : ra uniform on [-90.0, 90.0], dec uniform on [0.0, 90.0]
-- intrinsic intensity : uniform on [1, 1000.0]
-- intrinsic color : uniform on [1 .. 6]
-- red shift : uniform on [0.0 .. 3.0]
-
-- I0 = 500.0
-- effective luminosity: f(intensity, redshift) : el = log(I/I0) * z
-
-We can construct the image for an object
-
-Gaussian pattern at position. Pixels are filled up to some threshold
-
-Then we fill the image from simulated objects
-
-
-- rasize = 180.0 / 100
-- decsize = 90.0 / 100
-
-We find all objects
-"""
-
-# Object number to simulate
-NOBJECTS = 100000
-
-# Basic intensity
-INTENSITY0 = 100000.0
-
-# Splitting the sky into patches at the simulation stage
-RAPATCHES = 800
-DECPATCHES = 400
-
-# Dispersion for the simulator
-SIGMA = 4.0
-
-# Simulating the CCD
-PIXELS_PER_DEGREE = 8000
-# PIXELS_PER_DEGREE = 16000
-# 4000 pixels = 0,2253744679276044 °
-
-# Simulation region
-RA0 = -20.0
-DEC0 = 20
-IMAGES_IN_RA = 3
-IMAGES_IN_DEC = 2
-
-# we consider that all images cover exactly one patch
-IMAGE_RA_SIZE = 180.0 / RAPATCHES
-IMAGE_DEC_SIZE = 90.0 / DECPATCHES
-
-TOTALCCDS = 189
-TOTALPIXELS = 3200000000
-
-BACKGROUND = 200.0
-
-SPHERE = 4*np.pi*(180.0/np.pi)**2.0 # = 41 253 °²
-
-THRESHOLD_FACTOR = 2.0
-
-class Stepper(object):
-    previous_time = None
-
-    def __init__(self):
-        self.previous_time = time.time()
-
-    def show_step(self, label='Initial time'):
-        now = time.time()
-        delta = now - self.previous_time
-
-        print('--------------------------------', label, '{:.3f} seconds'.format(delta))
-
-        self.previous_time = now
-
+import configuration as conf
+import stepper
 
 def object_extension(height):
     """
@@ -115,14 +22,14 @@ def object_extension(height):
         return 0.0
 
     try:
-        size = int(SIGMA * np.sqrt(- 2.0 * np.log(1.0 / height)))
+        size = int(conf.SIGMA * np.sqrt(- 2.0 * np.log(1.0 / height)))
     except:
         print('bad')
 
     return size
 
 
-def build_simulation_pattern(height, size=None, sigma=SIGMA):
+def build_simulation_pattern(height, size=None, sigma=conf.SIGMA):
     """
     a 2D grid of pixels as a 2D centered normalized gaussian
     """
@@ -144,62 +51,6 @@ def gaussian_model(x, maxvalue, meanvalue, sigma):
     Compute a gaussian function
     """
     return maxvalue * np.exp(-(x - meanvalue)**2 / (2 * sigma**2))
-
-
-"""
-SkyObjects are generated randomly over the sky
-"""
-
-ObjectId = 0
-
-class SkyObject(object):
-    def __init__(self, ra, dec, intensity, color, redshift):
-        global ObjectId
-
-        self.ra = ra
-        self.dec = dec
-        self.intensity = intensity
-        self.color = color
-        self.redshift = redshift
-        self.luminosity = 1000.0 * self.redshift * np.log10(1.0 + INTENSITY0/self.intensity)
-
-        self.id = ObjectId
-        ObjectId += 1
-
-    def to_db(self):
-        obj = dict()
-
-        obj['ra'] = self.ra
-        obj['dec'] = self.dec
-        obj['intensity'] = self.intensity
-        obj['color'] = self.color
-        obj['redshift'] = self.redshift
-        obj['luminosity'] = self.luminosity
-        obj['id'] = self.id
-
-        return obj
-
-    def __repr__(self):
-        str = 'pos=[%f, %f] I=%f Color=%d Z=%f L=%f' % (self.ra,
-                                                        self.dec,
-                                                        self.intensity,
-                                                        self.color,
-                                                        self.redshift,
-                                                        self.luminosity)
-        return str
-
-
-def simul_one_object(ra0_region, ra1_region, dec0_region, dec1_region):
-    """
-    simulate one celestial object inside a given region in the sky
-    """
-    ra = np.random.random() * (ra1_region - ra0_region) + ra0_region
-    dec = np.random.random() * (dec1_region - dec0_region) + dec0_region
-    intensity = INTENSITY0 / 2 + np.random.random() * INTENSITY0
-    color = np.random.randint(1, 6)
-    redshift = np.random.random() * 3.0
-    o = SkyObject(ra, dec, intensity, color, redshift)
-    return o
 
 
 """
@@ -229,11 +80,11 @@ class Imager(object):
         image_dec = dec
 
         # ra/dec convert to pixels
-        image_x = int(image_ra * PIXELS_PER_DEGREE)
-        image_y = int(image_dec * PIXELS_PER_DEGREE)
+        image_x = int(image_ra * conf.PIXELS_PER_DEGREE)
+        image_y = int(image_dec * conf.PIXELS_PER_DEGREE)
 
-        image_x_size = int(IMAGE_RA_SIZE * PIXELS_PER_DEGREE)
-        image_y_size = int(IMAGE_DEC_SIZE * PIXELS_PER_DEGREE)
+        image_x_size = int(conf.IMAGE_RA_SIZE * conf.PIXELS_PER_DEGREE)
+        image_y_size = int(conf.IMAGE_DEC_SIZE * conf.PIXELS_PER_DEGREE)
 
         # print('image size: ', image_x_size, image_y_size)
 
@@ -253,8 +104,8 @@ class Imager(object):
             o = self.objects[oid]
             object_size = object_extension(o.luminosity)
 
-            o_x = int(o.ra * PIXELS_PER_DEGREE)
-            o_y = int(o.dec * PIXELS_PER_DEGREE)
+            o_x = int(o.ra * conf.PIXELS_PER_DEGREE)
+            o_y = int(o.dec * conf.PIXELS_PER_DEGREE)
 
             # Query if this object (with its extension) touches this image
             if object_size == 0.0:
@@ -294,10 +145,10 @@ class Imager(object):
         image_y_size += 2 * margin
 
         # create the extended image and fill it with a background level
-        image = np.random.rand(image_x_size, image_y_size) * BACKGROUND
+        image = np.random.rand(image_x_size, image_y_size) * conf.BACKGROUND
 
-        print('image [', ra, ':', ra + IMAGE_RA_SIZE, ',',
-              dec, ':', dec + IMAGE_DEC_SIZE, ']',
+        print('image [', ra, ':', ra + conf.IMAGE_RA_SIZE, ',',
+              dec, ':', dec + conf.IMAGE_DEC_SIZE, ']',
               len(objects_in_image), 'objects in this image')
 
         # fill the image with all object traces
@@ -306,8 +157,8 @@ class Imager(object):
             object_size = object_extension(o.luminosity)
 
             # absolute coordinates
-            o_x = int(o.ra * PIXELS_PER_DEGREE)
-            o_y = int(o.dec * PIXELS_PER_DEGREE)
+            o_x = int(o.ra * conf.PIXELS_PER_DEGREE)
+            o_y = int(o.dec * conf.PIXELS_PER_DEGREE)
 
             # relative coordinates
             x = o_x - image_x
@@ -380,10 +231,10 @@ class Cluster():
         self.integral = integral
 
     def ra(self):
-        return self.ra0 + self.column/PIXELS_PER_DEGREE
+        return self.ra0 + self.column/conf.PIXELS_PER_DEGREE
 
     def dec(self):
-        return self.dec0 + self.row/PIXELS_PER_DEGREE
+        return self.dec0 + self.row/conf.PIXELS_PER_DEGREE
 
     def __str__(self):
         return "{}/{} at ra={}, dec={}".format(self.top, self.integral, self.ra(), self.dec())
@@ -509,7 +360,7 @@ class Clustering():
         # result
         return cp_image
 
-    def __call__(self, image, background, dispersion, factor=THRESHOLD_FACTOR):
+    def __call__(self, image, background, dispersion, factor=conf.THRESHOLD_FACTOR):
 
         """
         principle:
@@ -541,7 +392,7 @@ class Clustering():
         # make a copy with a border of 1
         ext_cp_image = extend_image(cp_image, 1)
 
-        stepper = Stepper()
+        stepper = stepper.Stepper()
 
         # ========================================================================================
         stepper.show_step('  image prepared for clustering')
@@ -612,7 +463,7 @@ def one_image(image_id):
 
     dataset = pickle.load(open("../data/image%d.p" % image_id, "rb"))
 
-    stepper = Stepper()
+    stepper = stepper.Stepper()
 
     image_id = dataset.image_id
     ra = dataset.ra
@@ -635,10 +486,7 @@ def one_image(image_id):
     #========================================================================================
     stepper.show_step('== clusters computed')
 
-    if HAS_MONGODB:
-        client = pymongo.MongoClient(MONGO_URL)
-        lsst = client.lsst
-        stars = lsst.stars
+    stars = job.setup_db()
 
     radius = 0.0004
     cluster_found = 0
@@ -671,106 +519,24 @@ def one_image(image_id):
 
 
 if __name__ == '__main__':
-    stepper = Stepper()
+    stepper = stepper.Stepper()
+
+    """
+    First step all reference objects have been created in the reference_catalog application
+    """
 
     """
     Object simulation onto the complete half sky
     """
-    if HAS_JOBLIB:
+    if job.HAS_JOBLIB:
         num_cores = multiprocessing.cpu_count()
         print('core number:', num_cores)
 
-    if HAS_FUTURES:
+    if job.HAS_FUTURES:
         exe = concurrent.futures.ProcessPoolExecutor()
 
     #========================================================================================
     stepper.show_step("starting simulation")
-
-    """
-    We simulate a sky region extended by one image width
-    besides the basic IMAGES_IN_RA x IMAGES_IN_DEC
-    """
-
-    region_ra0 = RA0 - IMAGE_RA_SIZE
-    region_ra1 = region_ra0 + IMAGE_RA_SIZE * (IMAGES_IN_RA + 2)
-
-    region_dec0 = DEC0 - IMAGE_DEC_SIZE
-    region_dec1 = region_dec0 + IMAGE_DEC_SIZE * (IMAGES_IN_DEC + 2)
-
-    print('simulation region [', region_ra0, ':', region_ra1, ',', region_dec0, ':', region_dec1, ']')
-
-    submissions = []
-
-    if HAS_JOBLIB:
-        n_jobs = num_cores
-        # n_jobs = 1
-        submissions = Parallel(n_jobs=n_jobs)\
-            (delayed(simul_one_object)(region_ra0, region_ra1, region_dec0, region_dec1) for n in range(NOBJECTS))
-    else:
-        for n in range(NOBJECTS):
-            if HAS_FUTURES:
-                o = exe.submit(simul_one_object, region_ra0, region_ra1, region_dec0, region_dec1)
-            else:
-                o = simul_one_object(region_ra0, region_ra1, region_dec0, region_dec1)
-
-            submissions.append(o)
-
-    #========================================================================================
-    stepper.show_step('all submissions done')
-
-    stars = None
-    if HAS_MONGODB:
-        client = pymongo.MongoClient(MONGO_URL)
-        lsst = client.lsst
-
-        recreate = True
-
-        if recreate:
-            try:
-                stars = lsst.stars
-                lsst.drop_collection('stars')
-            except:
-                pass
-
-        stars = lsst.stars
-
-    #========================================================================================
-    stepper.show_step('Db initialized')
-
-    objects = dict()
-    for s in submissions:
-        if HAS_FUTURES:
-            o = s.result()
-        else:
-            o = s
-
-        objects[o.id] = o
-
-    # ========================================================================================
-    stepper.show_step('all objects created {}'.format(NOBJECTS))
-
-    if HAS_MONGODB:
-        for o_id in objects:
-            o = objects[o_id]
-
-            object = o.to_db()
-
-            object['center'] = {'type': 'Point', 'coordinates': [o.ra, o.dec]}
-            try:
-                id = stars.insert_one(object)
-                # print('object inserted', o.ra, o.dec)
-            except Exception as e:
-                print('oops')
-                print(e.message)
-                sys.exit()
-
-        #========================================================================================
-        stepper.show_step('all objects inserted')
-
-        stars.create_index([('center', '2dsphere')])
-
-        #========================================================================================
-        stepper.show_step('2D index created')
 
     """
     now we select a region of the sky
@@ -781,10 +547,10 @@ if __name__ == '__main__':
     imager = Imager(objects)
 
     image_id = 0
-    ra = RA0
-    for r in range(IMAGES_IN_RA):
-        dec = DEC0
-        for c in range(IMAGES_IN_DEC):
+    ra = conf.RA0
+    for r in range(conf.IMAGES_IN_RA):
+        dec = conf.DEC0
+        for c in range(conf.IMAGES_IN_DEC):
             image, margin = imager.fill(ra, dec)
 
             dataset = Dataset(image_id, ra, dec, image, r, c)
@@ -793,22 +559,22 @@ if __name__ == '__main__':
 
             image_id += 1
 
-            dec += IMAGE_DEC_SIZE
-        ra += IMAGE_RA_SIZE
+            dec += conf.IMAGE_DEC_SIZE
+        ra += conf.IMAGE_RA_SIZE
 
     #========================================================================================
     stepper.show_step('all images created')
 
     submissions = []
 
-    if HAS_JOBLIB:
+    if job.HAS_JOBLIB:
         n_jobs = num_cores
         # n_jobs = 1
         submissions = Parallel(n_jobs=n_jobs) \
             (delayed(one_image)(image_id) for image_id in range(4))
     else:
-        for img_id in range(IMAGES_IN_RA*IMAGES_IN_DEC):
-            if HAS_FUTURES:
+        for img_id in range(conf.IMAGES_IN_RA*conf.IMAGES_IN_DEC):
+            if job.HAS_FUTURES:
                 s = exe.submit(one_image, img_id)
             else:
                 s = one_image(img_id)
@@ -819,18 +585,18 @@ if __name__ == '__main__':
 
     s_id = 0
 
-    if SHOW_GRAPHICS:
-        _, axes = plt.subplots(IMAGES_IN_RA, IMAGES_IN_DEC)
+    if job.SHOW_GRAPHICS:
+        _, axes = plt.subplots(conf.IMAGES_IN_RA, conf.IMAGES_IN_DEC)
 
-    for r in range(IMAGES_IN_RA):
-        for c in range(IMAGES_IN_DEC):
+    for r in range(conf.IMAGES_IN_RA):
+        for c in range(conf.IMAGES_IN_DEC):
             s = submissions[s_id]
-            if HAS_FUTURES:
+            if job.HAS_FUTURES:
                 image = s.result()
             else:
                 image = s
 
-            if SHOW_GRAPHICS:
+            if job.SHOW_GRAPHICS:
                 axes[r, c].imshow(image)
 
             s_id += 1
@@ -838,6 +604,6 @@ if __name__ == '__main__':
     #========================================================================================
     stepper.show_step('Done')
 
-    if SHOW_GRAPHICS:
+    if job.SHOW_GRAPHICS:
         plt.show()
 
