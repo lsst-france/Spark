@@ -16,6 +16,11 @@ if job.HAS_JOBLIB:
     import multiprocessing
     num_cores = multiprocessing.cpu_count()
 
+if job.HAS_SPARK:
+    from pyspark.sql import SparkSession
+    from pyspark.sql.types import *
+    from pyspark import SparkConf, SparkContext
+
 
 def object_extension(height):
     """
@@ -207,22 +212,76 @@ if __name__ == '__main__':
     (ie. when no one simulated pixel will reach the region)
     """
 
-    imager = Imager(objects)
+    if HAS_SPARK:
 
-    image_id = 0
-    ra = conf.RA0
-    for r in range(conf.IMAGES_IN_RA):
-        dec = conf.DEC0
-        for c in range(conf.IMAGES_IN_DEC):
+        spark = SparkSession \
+                .builder \
+                .appName("LSSTSim") \
+                .getOrCreate()
+
+        sc = spark.sparkContext
+
+        images = []
+
+        image_id = 0
+        ra = conf.RA0
+        for r in range(conf.IMAGES_IN_RA):
+            dec = conf.DEC0
+            for c in range(conf.IMAGES_IN_DEC):
+                images.append((image_id, ra, dec, r, c))
+
+                image_id += 1
+                dec += conf.IMAGE_DEC_SIZE
+            ra += conf.IMAGE_RA_SIZE
+
+        image_schema = StructType([StructField("id", IntegerType(), True),
+                                   StructField("ra", IntegerDouble(), True),
+                                   StructField("dec", IntegerDouble(), True),
+                                   StructField("r", IntegerType(), True),
+                                   StructField("c", IntegerType(), True),
+                                   StructField("image", ArrayType(ArrayType(DoubleType()), True))])
+
+        def fill(x):
+            ra = x[1]
+            dec = x[2]
+            objects = catalog.get_all_reference_objects()
+            imager = Imager(objects)
             image, margin = imager.fill(ra, dec)
 
-            data = dataset.Dataset(image_id, ra, dec, image, r, c)
-            data.save(image_id)
+            y = {'id':x[0],
+                 'ra':x[1],
+                 'dec':x[2],
+                 'r':x[3],
+                 'c':x[4],
+                 'image':image.tolist()}
 
-            image_id += 1
+            return y
 
-            dec += conf.IMAGE_DEC_SIZE
-        ra += conf.IMAGE_RA_SIZE
+
+        # create the real regions
+        rdd = sc.parallelize(images).map(lambda x: fill(x))
+        df = spark.createDataFrame(rdd, image_schema)
+
+        # save regions
+        df.write.format("com.databricks.spark.avro").mode("overwrite").save("./images")
+
+    else:
+        imager = Imager(objects)
+
+        image_id = 0
+        ra = conf.RA0
+        for r in range(conf.IMAGES_IN_RA):
+            dec = conf.DEC0
+            for c in range(conf.IMAGES_IN_DEC):
+                image, margin = imager.fill(ra, dec)
+
+                data = dataset.Dataset(image_id, ra, dec, image, r, c)
+                data.save(image_id)
+
+                image_id += 1
+
+                dec += conf.IMAGE_DEC_SIZE
+            ra += conf.IMAGE_RA_SIZE
 
     #========================================================================================
     stepper.show_step('all images created')
