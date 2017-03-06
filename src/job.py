@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 
-HAS_FUTURES = True
+HAS_FUTURES = False
 HAS_JOBLIB = False
 SHOW_GRAPHICS = True
 HAS_MONGODB = True
@@ -25,8 +25,8 @@ if HAS_JOBLIB:
     num_cores = multiprocessing.cpu_count()
 
 def setup_db():
-    if job.HAS_MONGODB:
-        client = pymongo.MongoClient(job.MONGO_URL)
+    if HAS_MONGODB:
+        client = pymongo.MongoClient(MONGO_URL)
         lsst = client.lsst
         stars = lsst.stars
         return stars

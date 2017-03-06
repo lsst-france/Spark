@@ -6,7 +6,7 @@ import job
 import reference_catalog as catalog
 import configuration as conf
 import numpy as np
-import pickle
+import dataset
 
 if job.HAS_FUTURES:
     import concurrent.futures
@@ -178,17 +178,6 @@ class Imager(object):
         return image, margin
 
 
-class Dataset:
-    def __init__(self, image_id, ra, dec, image, r, c):
-        self.image_id = image_id
-        self.ra = ra
-        self.dec = dec
-        self.image = image
-        self.r = r
-        self.c = c
-
-
-
 if __name__ == '__main__':
     stepper = step.Stepper()
 
@@ -227,9 +216,8 @@ if __name__ == '__main__':
         for c in range(conf.IMAGES_IN_DEC):
             image, margin = imager.fill(ra, dec)
 
-            dataset = Dataset(image_id, ra, dec, image, r, c)
-
-            pickle.dump(dataset, open("../data/image%d.p" % image_id, "wb"))
+            data = dataset.Dataset(image_id, ra, dec, image, r, c)
+            data.save(image_id)
 
             image_id += 1
 

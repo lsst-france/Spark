@@ -2,15 +2,21 @@
 # -*- coding: utf-8 -*-
 
 import job
-
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
-import time
-
-import os
 import configuration as conf
-import stepper
+import stepper as step
+import dataset
+
+if job.HAS_FUTURES:
+    import concurrent.futures
+
+if job.HAS_JOBLIB:
+    from joblib import Parallel, delayed
+    import multiprocessing
+    num_cores = multiprocessing.cpu_count()
+
 
 def gaussian_model(x, maxvalue, meanvalue, sigma):
     """
@@ -234,7 +240,7 @@ class Clustering():
         # make a copy with a border of 1
         ext_cp_image = extend_image(cp_image, 1)
 
-        stepper = stepper.Stepper()
+        stepper = step.Stepper()
 
         # ========================================================================================
         stepper.show_step('  image prepared for clustering')
@@ -294,16 +300,15 @@ def add_crosses(image, clusters):
 def one_image(image_id):
     print('starting one_image', image_id)
 
-    dataset = pickle.load(open("../data/image%d.p" % image_id, "rb"))
+    stepper = step.Stepper()
 
-    stepper = stepper.Stepper()
-
-    image_id = dataset.image_id
-    ra = dataset.ra
-    dec = dataset.dec
-    image = dataset.image
-    r = dataset.r
-    c = dataset.c
+    data = dataset.Dataset(image_id)
+    image_id = data.image_id
+    ra = data.ra
+    dec = data.dec
+    image = data.image
+    r = data.r
+    c = data.c
 
     background, dispersion, x, y = compute_background(image)
 
@@ -352,7 +357,14 @@ def one_image(image_id):
 
 
 if __name__ == '__main__':
-    stepper = stepper.Stepper()
+    stepper = step.Stepper()
+
+    if job.HAS_JOBLIB:
+        num_cores = multiprocessing.cpu_count()
+        print('core number:', num_cores)
+
+    if job.HAS_FUTURES:
+        exe = concurrent.futures.ProcessPoolExecutor()
 
     submissions = []
 
