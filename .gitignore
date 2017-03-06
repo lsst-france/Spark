@@ -1,2 +1,4 @@
 .idea/*
 data/image*.p
+src/__pycache__
+

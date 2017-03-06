@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 
+import os
+
 if os.name == 'nt':
     HAS_SPARK = False
 else:
@@ -17,13 +19,11 @@ else:
 SHOW_GRAPHICS = True
 HAS_MONGODB = True
 
-import os
-
 if HAS_MONGODB:
     import pymongo
 import pickle
 
-if os.name == 'nt':
+if HAS_MONGODB:
     MONGO_URL = r'mongodb://127.0.0.1:27017'
 
 if HAS_FUTURES:

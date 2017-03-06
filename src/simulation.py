@@ -212,7 +212,7 @@ if __name__ == '__main__':
     (ie. when no one simulated pixel will reach the region)
     """
 
-    if HAS_SPARK:
+    if job.HAS_SPARK:
 
         spark = SparkSession \
                 .builder \
@@ -235,8 +235,8 @@ if __name__ == '__main__':
             ra += conf.IMAGE_RA_SIZE
 
         image_schema = StructType([StructField("id", IntegerType(), True),
-                                   StructField("ra", IntegerDouble(), True),
-                                   StructField("dec", IntegerDouble(), True),
+                                   StructField("ra", DoubleType(), True),
+                                   StructField("dec", DoubleType(), True),
                                    StructField("r", IntegerType(), True),
                                    StructField("c", IntegerType(), True),
                                    StructField("image", ArrayType(ArrayType(DoubleType()), True))])
