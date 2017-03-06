@@ -297,18 +297,26 @@ def add_crosses(image, clusters):
         peaks[rnum, cnum - x:cnum + x + 1] = image[rnum, cnum]
     return peaks
 
-def one_image(image_id):
+def one_image(image_id, dataframe=None):
     print('starting one_image', image_id)
 
     stepper = step.Stepper()
 
-    data = dataset.Dataset(image_id)
-    image_id = data.image_id
-    ra = data.ra
-    dec = data.dec
-    image = data.image
-    r = data.r
-    c = data.c
+    if dataframe is None:
+        data = dataset.Dataset(image_id)
+        image_id = data.image_id
+        ra = data.ra
+        dec = data.dec
+        image = data.image
+        r = data.r
+        c = data.c
+    else:
+        image_id = dataframe.id
+        ra = dataframe.ra
+        dec = dataframe.dec
+        image = np.array(dataframe.image)
+        r = dataframe.r
+        c = dataframe.c
 
     background, dispersion, x, y = compute_background(image)
 
@@ -356,6 +364,11 @@ def one_image(image_id):
     return image
 
 
+def analyze(x):
+    one_image(x.id, x)
+    return 'analyze image', x[0]
+
+
 if __name__ == '__main__':
     stepper = step.Stepper()
 
@@ -366,20 +379,39 @@ if __name__ == '__main__':
     if job.HAS_FUTURES:
         exe = concurrent.futures.ProcessPoolExecutor()
 
-    submissions = []
+    if job.HAS_SPARK:
 
-    if job.HAS_JOBLIB:
-        n_jobs = num_cores
-        # n_jobs = 1
-        submissions = Parallel(n_jobs=n_jobs) \
-            (delayed(one_image)(image_id) for image_id in range(4))
+        spark = SparkSession \
+                .builder \
+                .appName("LSSTSim") \
+                .getOrCreate()
+
+        sc = spark.sparkContext
+
+        print("========================================= read back data")
+        df = spark.read.format("com.databricks.spark.avro").load("./images")
+
+        rdd = df.rdd.map(lambda x: (x.id, x.ra, x.dec, x.r, x.c, np.array(x.image)))\
+            .map(lambda x: analyze(x))
+
+        rdd.collect()
+
+        print(result)
     else:
-        for img_id in range(conf.IMAGES_IN_RA*conf.IMAGES_IN_DEC):
-            if job.HAS_FUTURES:
-                s = exe.submit(one_image, img_id)
-            else:
-                s = one_image(img_id)
-            submissions.append(s)
+        submissions = []
+
+        if job.HAS_JOBLIB:
+            n_jobs = num_cores
+            # n_jobs = 1
+            submissions = Parallel(n_jobs=n_jobs) \
+                (delayed(one_image)(image_id) for image_id in range(4))
+        else:
+            for img_id in range(conf.IMAGES_IN_RA*conf.IMAGES_IN_DEC):
+                if job.HAS_FUTURES:
+                    s = exe.submit(one_image, img_id)
+                else:
+                    s = one_image(img_id)
+                submissions.append(s)
 
     #========================================================================================
     stepper.show_step('All images computed.')
