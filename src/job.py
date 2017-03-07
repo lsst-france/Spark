@@ -21,10 +21,12 @@ HAS_MONGODB = True
 
 if HAS_MONGODB:
     import pymongo
+
 import pickle
 
 if HAS_MONGODB:
-    MONGO_URL = r'mongodb://127.0.0.1:27017'
+    # MONGO_URL = r'mongodb://127.0.0.1:27017'
+    MONGO_URL = r'mongodb://134.158.75.222:27017'
 
 if HAS_FUTURES:
     import concurrent.futures
