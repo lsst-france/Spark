@@ -17,6 +17,12 @@ if job.HAS_JOBLIB:
     import multiprocessing
     num_cores = multiprocessing.cpu_count()
 
+if job.HAS_SPARK:
+    from pyspark.sql import SparkSession
+    from pyspark.sql.types import *
+    from pyspark import SparkConf, SparkContext
+
+
 
 def gaussian_model(x, maxvalue, meanvalue, sigma):
     """
@@ -311,12 +317,12 @@ def one_image(image_id, dataframe=None):
         r = data.r
         c = data.c
     else:
-        image_id = dataframe.id
-        ra = dataframe.ra
-        dec = dataframe.dec
-        image = np.array(dataframe.image)
-        r = dataframe.r
-        c = dataframe.c
+        image_id = dataframe[0]
+        ra = dataframe[1]
+        dec = dataframe[2]
+        r = dataframe[3]
+        c = dataframe[4]
+        image = np.array(dataframe[5])
 
     background, dispersion, x, y = compute_background(image)
 
@@ -365,8 +371,8 @@ def one_image(image_id, dataframe=None):
 
 
 def analyze(x):
-    one_image(x.id, x)
-    return 'analyze image', x[0]
+    one_image(x[0], x)
+    return x[5]
 
 
 if __name__ == '__main__':
@@ -378,6 +384,8 @@ if __name__ == '__main__':
 
     if job.HAS_FUTURES:
         exe = concurrent.futures.ProcessPoolExecutor()
+
+    submissions = []
 
     if job.HAS_SPARK:
 
@@ -394,11 +402,12 @@ if __name__ == '__main__':
         rdd = df.rdd.map(lambda x: (x.id, x.ra, x.dec, x.r, x.c, np.array(x.image)))\
             .map(lambda x: analyze(x))
 
-        rdd.collect()
+        result = rdd.collect()
 
-        print(result)
+        for image in result:
+            submissions.append(image)
+
     else:
-        submissions = []
 
         if job.HAS_JOBLIB:
             n_jobs = num_cores
@@ -411,7 +420,7 @@ if __name__ == '__main__':
                     s = exe.submit(one_image, img_id)
                 else:
                     s = one_image(img_id)
-                submissions.append(s)
+                submissions.append(np.array(s))
 
     #========================================================================================
     stepper.show_step('All images computed.')
@@ -423,16 +432,17 @@ if __name__ == '__main__':
 
     for r in range(conf.IMAGES_IN_RA):
         for c in range(conf.IMAGES_IN_DEC):
-            s = submissions[s_id]
-            if job.HAS_FUTURES:
-                image = s.result()
-            else:
-                image = s
+            if len(submissions) > 0: 
+                s = submissions[s_id]
+                if job.HAS_FUTURES:
+                    image = s.result()
+                else:
+                    image = s
 
-            if job.SHOW_GRAPHICS:
-                axes[r, c].imshow(image)
+                if job.SHOW_GRAPHICS:
+                    axes[r, c].imshow(image)
 
-            s_id += 1
+                s_id += 1
 
     #========================================================================================
     stepper.show_step('Done')

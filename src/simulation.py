@@ -249,8 +249,8 @@ if __name__ == '__main__':
             image, margin = imager.fill(ra, dec)
 
             y = {'id':x[0],
-                 'ra':x[1],
-                 'dec':x[2],
+                 'ra':float(x[1]),
+                 'dec':float(x[2]),
                  'r':x[3],
                  'c':x[4],
                  'image':image.tolist()}
