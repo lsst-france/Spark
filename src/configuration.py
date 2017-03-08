@@ -47,14 +47,14 @@ DECPATCHES = 400
 SIGMA = 4.0
 
 # Simulating the CCD
-PIXELS_PER_DEGREE = 16000
+PIXELS_PER_DEGREE = 64000
 # 4000 pixels = 0,2253744679276044 °
 
 # Simulation region
 RA0 = -20.0
 DEC0 = 20
-IMAGES_IN_RA = 5
-IMAGES_IN_DEC = 5
+IMAGES_IN_RA = 4
+IMAGES_IN_DEC = 3
 
 # we consider that all images cover exactly one patch
 IMAGE_RA_SIZE = 180.0 / RAPATCHES

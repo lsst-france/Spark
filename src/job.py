@@ -16,7 +16,7 @@ else:
     HAS_FUTURES = False
     HAS_JOBLIB = False
 
-SHOW_GRAPHICS = True
+SHOW_GRAPHICS = False
 HAS_MONGODB = True
 
 if HAS_MONGODB:

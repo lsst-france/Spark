@@ -367,13 +367,14 @@ def one_image(image_id, dataframe=None):
     #========================================================================================
     stepper.show_step('full image')
 
-    return image
+    return image, cluster_found, len(clusters), sum(all_matches)
 
 
 def analyze(x):
-    one_image(x[0], x)
-    return x[5]
-
+    image, cluster_found, clusters, all_matches = one_image(x[0], x)
+    text = '  -> %d found vs. %d clusters in image. Match efficiency %f' % (cluster_found, clusters, all_matches/clusters)
+    # return x[5]
+    return 'image %d %s' % (x[0], text)
 
 if __name__ == '__main__':
     stepper = step.Stepper()
@@ -404,8 +405,10 @@ if __name__ == '__main__':
 
         result = rdd.collect()
 
-        for image in result:
-            submissions.append(image)
+        for r in result:
+            # submissions.append(image)
+            print(r)
+            pass
 
     else:
 
