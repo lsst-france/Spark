@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import args
 import job
 import numpy as np
 import matplotlib.pyplot as plt
@@ -377,6 +378,10 @@ def analyze(x):
     return 'image %d %s' % (x[0], text)
 
 if __name__ == '__main__':
+
+    a = args.get_args()
+    print(a)
+
     stepper = step.Stepper()
 
     if job.HAS_JOBLIB:

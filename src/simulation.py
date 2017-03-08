@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import args
 import stepper as step
 import job
 import reference_catalog as catalog
@@ -20,7 +21,6 @@ if job.HAS_SPARK:
     from pyspark.sql import SparkSession
     from pyspark.sql.types import *
     from pyspark import SparkConf, SparkContext
-
 
 def object_extension(height):
     """
@@ -184,6 +184,10 @@ class Imager(object):
 
 
 if __name__ == '__main__':
+
+    a = args.get_args()
+    print(a)
+
     stepper = step.Stepper()
 
     """
