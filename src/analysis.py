@@ -380,7 +380,10 @@ def analyze(x):
 if __name__ == '__main__':
 
     a = args.get_args()
-    print(a)
+    print('rows=%d columns=%d pixels=%d graphic=%s' % (conf.IMAGES_IN_RA,
+                                                       conf.IMAGES_IN_DEC,
+                                                       conf.PIXELS_PER_DEGREE,
+                                                       conf.HAS_GRAPHIC))
 
     stepper = step.Stepper()
 
