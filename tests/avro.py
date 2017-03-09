@@ -28,8 +28,8 @@ def create_images(spark):
     sc = spark.sparkContext
 
 
-    rows = 5
-    cols = 5
+    rows = 3
+    cols = 3
     regions = []
     region_id = 0
     region_size = 8000
@@ -64,8 +64,7 @@ def read_images(spark):
 
     rdd = df.rdd.map(lambda x: (x.id, x.r, x.c, np.array(x.image)))
 
-    print(rdd.take(1))
-    result = rdd.map(lambda x: analyze(x)).collect()
+    result = rdd.map(lambda x: analyze(x)).take(1)
     print(result)
 
 

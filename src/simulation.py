@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import sys
 import args
 import stepper as step
 import job
@@ -254,6 +255,8 @@ if __name__ == '__main__':
             objects = catalog.get_all_reference_objects()
             imager = Imager(objects)
             image, margin = imager.fill(ra, dec)
+
+            print('taille des objets ', sys.getsizeof(objects), sys.getsizeof(image))
 
             y = {'id':x[0],
                  'ra':float(x[1]),
