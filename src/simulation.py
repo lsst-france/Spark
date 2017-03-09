@@ -256,7 +256,8 @@ if __name__ == '__main__':
             imager = Imager(objects)
             image, margin = imager.fill(ra, dec)
 
-            print('taille des objets ', sys.getsizeof(objects), sys.getsizeof(image))
+            mega = 1024. * 1024.
+            print('taille des objets ', sys.getsizeof(objects)/mega, sys.getsizeof(image)/mega)
 
             y = {'id':x[0],
                  'ra':float(x[1]),
