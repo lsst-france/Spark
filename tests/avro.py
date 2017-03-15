@@ -28,11 +28,11 @@ def create_images(spark):
     sc = spark.sparkContext
 
 
-    rows = 3
-    cols = 3
+    rows = 2
+    cols = 2
     regions = []
     region_id = 0
-    region_size = 8000
+    region_size = 1000
 
     # initialize region descriptors
     for r in range(rows):
