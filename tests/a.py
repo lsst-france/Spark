@@ -4,6 +4,7 @@ spark-submit --conf spark.kryoserializer.buffer.max=2000mb --executor-memory 20g
 """
 
 from pyspark.sql import SparkSession
+from pyspark.sql import functions
 
 import numpy as np
 from pyspark.sql.types import *
@@ -44,16 +45,22 @@ else:
     print('reading data and applying', steps, 'steps to them')
     df = spark.read.load("./images")
     df = df.filter(df.run == 3)
-    rdd = df.rdd.map(lambda x : (x.run, np.array(x.image)))
+    exp = functions.udf(lambda m: np.exp(np.array(m)).tolist(), ArrayType(DoubleType(), True))
+    log = functions.udf(lambda m: np.log(np.array(m)).tolist(), ArrayType(DoubleType(), True))
+
+    msum1 = functions.udf(lambda m: float(len(m)),       DoubleType())
+    msum =  functions.udf(lambda m: np.sum(np.array(m)), DoubleType())
 
     for step in range(steps):
-        rdd = rdd.map(lambda x: (x[0], np.exp(x[1])))
-        rdd = rdd.map(lambda x: (x[0], np.log(x[1])))
-        if (step % 10) == 0:
-            rdd = rdd.cache()
+        df = df.select(df.run, exp(df.image).alias('image'))
+        df = df.select(df.run, log(df.image).alias('image'))
 
-    rdd = rdd.map(lambda x: (x[0], np.sum(x[1])))
-    result = rdd.take(10)
+    use_df = True
 
-    print(result)
+    if use_df:
+        df = df.select(df.run, msum(df.image).alias('sum'))
+        df.show()
+    else:
+        result = df.rdd.map(lambda x : (x[0], np.sum(np.array((x[1]))))).take(10)
+        print(result)
 
