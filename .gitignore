@@ -2,3 +2,5 @@
 data/image*.p
 src/__pycache__
 
+tests/derby.log
+tests/metastore_db/*
