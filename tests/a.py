@@ -47,20 +47,12 @@ else:
     df = df.filter(df.run == 3)
     exp = functions.udf(lambda m: np.exp(np.array(m)).tolist(), ArrayType(DoubleType(), True))
     log = functions.udf(lambda m: np.log(np.array(m)).tolist(), ArrayType(DoubleType(), True))
-
-    msum1 = functions.udf(lambda m: float(len(m)),       DoubleType())
-    msum =  functions.udf(lambda m: np.sum(np.array(m)), DoubleType())
+    msum =  functions.udf(lambda m: float(np.sum(np.array(m))), DoubleType())
 
     for step in range(steps):
         df = df.select(df.run, exp(df.image).alias('image'))
         df = df.select(df.run, log(df.image).alias('image'))
 
-    use_df = True
-
-    if use_df:
-        df = df.select(df.run, msum(df.image).alias('sum'))
-        df.show()
-    else:
-        result = df.rdd.map(lambda x : (x[0], np.sum(np.array((x[1]))))).take(10)
-        print(result)
+    df = df.select(df.run, msum(df.image).alias('sum'))
+    df.show()
 
