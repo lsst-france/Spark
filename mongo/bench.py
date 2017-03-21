@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
 import random
+import pymongo
 
 # MONGO_URL = r'mongodb://127.0.0.1:27017'
 MONGO_URL = r'mongodb://134.158.75.222:27017'
