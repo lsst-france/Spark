@@ -7,8 +7,8 @@ import bson
 import decimal
 from pymongo.errors import BulkWriteError
 
-# MONGO_URL = r'mongodb://127.0.0.1:27017'
-MONGO_URL = r'mongodb://134.158.75.222:27017'
+MONGO_URL = r'mongodb://127.0.0.1:27017'
+# MONGO_URL = r'mongodb://134.158.75.222:27017'
 
 import time
 
@@ -26,110 +26,155 @@ class Stepper(object):
 
         self.previous_time = now
 
+class Schema(object):
+    def __init__(self, name):
+        self.name = name
+        self.fields = dict()
+        self.collection = None
 
+    def add_field(self, name, ftype):
+        # print('add field', name, ftype)
+        self.fields[name] = ftype
 
-if __name__ == '__main__':
+    def set_collection(self, col):
+        self.collection = col
 
-    stepper = Stepper()
+Schemas = dict()
 
-    lines = []
+def read_schema():
+    global Schemas
 
-    types = dict()
-    fields = dict()
+    schema = None
+    schema_name = None
 
-    with open('table.txt', 'rb') as f:
+    with open('schema.sql', 'rb') as f:
+        in_schema = False
+
         for line in f:
             line = line.strip().decode('utf-8')
-            words = line.split('\t')
-            field = words[0]
-            ftype = words[1]
-            types[ftype] = True
-            fields[field] = ftype
+            if in_schema:
+                if line.startswith(') ENGINE=MyISAM '):
+                    Schemas[schema_name] = schema
+                    schema = None
+                    schema_name = None
+                    in_schema = False
+                    continue
 
-    stepper.show_step('config data read')
+                words = line.split(' ')
 
+                if len(words) == 0:
+                    continue
+                if words[0] == 'PRIMARY':
+                    continue
+                if words[0] == 'KEY':
+                    continue
+
+                field = words[0][1:-1]
+                ftype = words[1]
+
+                schema.add_field(field, ftype)
+
+            else:
+                if line.startswith('CREATE TABLE'):
+                    in_schema = True
+                    words = line.split(' ')
+                    schema_name = words[2][1:-1]
+                    print(schema_name)
+                    schema = Schema(schema_name)
+
+
+def read_data(file_name):
+    schema = None
+    for schema_name in Schemas:
+        if file_name.startswith(schema_name):
+            schema = Schemas[schema_name]
+            break
+
+    if schema is None:
+        print('no schema')
+        return
+
+    print('using schema', schema_name)
+
+    requests = []
+
+    with open(file_name, 'rb') as f:
+        header = True
+        line_num = 0
+        for line in f:
+            line = line.strip().decode('utf-8')
+            line_num += 1
+            if (line_num % 1000) == 0:
+                print(line_num)
+            words = line.split(';')
+            if header:
+                header = False
+                fields = words.copy()
+                continue
+
+            obj = dict()
+            for item, word in enumerate(words):
+                field = fields[item]
+                if field not in schema.fields:
+                    print('error')
+                    return
+
+                ftype = schema.fields[field]
+
+                if word == 'NULL':
+                    value = None
+                else:
+                    if ftype == 'bit(1)':
+                        value = int(word)
+                    elif ftype == 'int(11)':
+                        value = int(word)
+                    elif ftype == 'bigint(20)':
+                        value = int(word)
+                    elif ftype == 'double':
+                        value = float(word)
+
+                    # print(field, '=', value)
+                    obj[field] = value
+
+            requests.append(pymongo.InsertOne(obj))
+
+    total = 0
+    col = schema.collection
+    for retry in range(10):
+        try:
+            result = col.bulk_write(requests)
+            total += result.inserted_count
+            print(total)
+            break
+            # print('object inserted')
+        except BulkWriteError as bwe:
+            print(retry, bwe.details)
+            continue
+
+if __name__ == '__main__':
     bench = None
     client = pymongo.MongoClient(MONGO_URL)
     lsst = client.lsst
+
+    read_schema()
 
     recreate = True
 
     if recreate:
         try:
-            bench = lsst.bench
-            lsst.drop_collection('bench')
+            for schema_name in Schemas:
+                lsst.drop_collection(schema_name)
         except:
             pass
 
-    bench = lsst.bench
-
-    deepSourceId = 2322920000000000
-
-    total = 0
-
-    for step in range(100):
-        requests = []
-        for nobject in range(1000):
-            obj = dict()
-
-            for field in fields:
-                ftype = fields[field]
-
-                value = None
-
-                if ftype == 'bit(1)':
-                    value = int(random.random()*2)
-                elif ftype == 'int(11)':
-                    value = int(random.random()*100000000000)
-                elif ftype == 'bigint(20)':
-                    if field == 'deepSourceId':
-                        value = deepSourceId
-                    else:
-                        value = int(random.random()*100000000000.0)
-                elif ftype == 'double':
-                    if field == 'ra':
-                        value = random.random()*180. - 90.
-                    elif field == 'decl':
-                        value = random.random()*90.
-                    else:
-                        value = random.random()
-
-                # print(field, value)
-                obj[field] = value
-
-            deepSourceId += 1
-
-            obj['center'] = {'type': 'Point', 'coordinates': [obj['ra'], obj['decl']]}
-
-            requests.append(pymongo.InsertOne(obj))
-
-        for retry in range(10):
-            try:
-                result = bench.bulk_write(requests)
-                total += result.inserted_count
-                print(total)
-                break
-                # print('object inserted')
-            except BulkWriteError as bwe:
-                pprint(retry, bwe.details)
-                continue
-
-        stepper.show_step('bulk ingestion done')
-
-    stepper.show_step('all ingestion done')
-
-    bench.create_index([('center', '2dsphere')])
-
-    stepper.show_step('index created')
-
-    ra = 1.0
-    decl = 1.0
-    radius = 0.1
-
-    for oid, o in enumerate(bench.find({'center': {'$geoWithin': {'$centerSphere': [[ra, decl], radius]}}},
-                            {'_id': 0, 'where': 1, 'center': 1, 'deepSourceId': 1})):
-        #print(o['deepSourceId'])
-        pass
+    for schema_name in Schemas:
+        col = lsst[schema_name]
+        schema = Schemas[schema_name]
+        schema.set_collection(col)
+        Schemas[schema_name] = schema
 
 
+    for chunk in ('10653', '10056'):
+        read_data('Object_{}.csv'.format(chunk))
+        read_data('Source_{}.csv'.format(chunk))
 

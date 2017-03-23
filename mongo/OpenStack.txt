@@ -1,0 +1,73 @@
+;; This buffer is for notes you don't want to save, and for Lisp evaluation.
+;; If you want to create a file, first visit that file with C-x C-f,
+;; then enter the text in that file's own buffer.
+
+    1  ls
+    2  exit
+    3  help mount
+    4  mount --help
+    5  df -k
+    6  sudo ls /dev/disk/by-id/
+    7  sudo mkfs.ext4 /dev/disk/by-id/virtio-453879d6-d286-4747-a 
+    8  mkdir -p /mnt/volume
+    9  sudo mount /dev/disk/by-id/virtio-453879d6-d286-4747-a /mnt/volume/
+   10  mkdir -p /mnt/volume
+   11  sudo mkdir -p /mnt/volume
+   12  sudo mount /dev/disk/by-id/virtio-453879d6-d286-4747-a /mnt/volume/
+   13  ls /mnt/volume/
+   14  fs -k /mnt/volume/
+   15  df -k
+   16  history
+   17  cd /mnt/volume/
+   18  mkdir bench
+   19  whoami
+   20  sudo mkdir bench
+   21  sudo chown ubuntu bench
+   22  ls -al bench/
+   23  cd
+   24  ls -al
+   25  sudo chgrp ubuntu /mnt/volume/bench
+   26  ls -al /mnt/volume/bench
+   27  ln -s /mnt/volume/bench bench
+   28  ls -al
+   29  cd bench
+   30  swift --os-tenant-name petasky --os-region-name RegionOne --os-username carnault --os-password ****** --os-auth-url https://auth.oscloud.isima.fr/v2.0 download lsst
+   31  sudo apt install swift
+   32  swift
+   33  sudo apt-get install clang libicu-dev
+   34  which swift
+   35  ls /opt
+   36  ls /usr/
+   37* 
+   38  sudo apt-get find clang
+   39  swift
+   40  sudo apt
+   41  sudo apt list swift
+   42  sudo apt search swift
+   43  sudo apt update swift
+   44  sudo apt search swift
+   45  sudo apt list python
+   46  python
+   47  sudo apt update python3
+   48  sudo apt update python
+   49  sudo apt update
+   50  sudo apt update python
+   51  sudo apt install python3
+   52  python
+   53  which python
+   54  ls /usr/bin/python3
+   55  /usr/bin/python3
+   56  sudo apt install swift
+   57  sudo apt install swift3
+   58  sudo apt install swift
+   59  sudo apt update swift
+   60  swift --os-tenant-name petasky --os-region-name RegionOne --os-username carnault --os-password ****** --os-auth-url https://auth.oscloud.isima.fr/v2.0 download lsst
+   61  swift --os-tenant-name petasky --os-region-name RegionOne --os-username carnault --os-password arnault7977 --os-auth-url https://auth.oscloud.isima.fr/v2.0 download lsst
+   62  sudo apt install python3-swiftclient
+   63  swift --os-tenant-name petasky --os-region-name RegionOne --os-username carnault --os-password arnault7977 --os-auth-url https://auth.oscloud.isima.fr/v2.0 download lsst
+   64  history
+
+sudo apt update
+
+swift --os-tenant-name petasky --os-region-name RegionOne --os-username carnault --os-password **** --os-auth-url https://auth.oscloud.isima.fr/v2.0 download lsst
+
