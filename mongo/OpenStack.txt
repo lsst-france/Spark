@@ -1,73 +1,392 @@
-;; This buffer is for notes you don't want to save, and for Lisp evaluation.
-;; If you want to create a file, first visit that file with C-x C-f,
-;; then enter the text in that file's own buffer.
+Création de la VM pour le bench QServ/Mongo
 
-    1  ls
-    2  exit
-    3  help mount
-    4  mount --help
+VM: c1.large 8C 40Go 4Mo
+Ubuntu Server 16.04 Desktop LTS(xenial)
+
+
+montage du volume attaché
+
     5  df -k
     6  sudo ls /dev/disk/by-id/
     7  sudo mkfs.ext4 /dev/disk/by-id/virtio-453879d6-d286-4747-a 
-    8  mkdir -p /mnt/volume
-    9  sudo mount /dev/disk/by-id/virtio-453879d6-d286-4747-a /mnt/volume/
-   10  mkdir -p /mnt/volume
+                                             453879d6-d286-4747-a35a-81aa9bf17bb1
    11  sudo mkdir -p /mnt/volume
    12  sudo mount /dev/disk/by-id/virtio-453879d6-d286-4747-a /mnt/volume/
-   13  ls /mnt/volume/
    14  fs -k /mnt/volume/
    15  df -k
-   16  history
    17  cd /mnt/volume/
-   18  mkdir bench
-   19  whoami
    20  sudo mkdir bench
    21  sudo chown ubuntu bench
-   22  ls -al bench/
-   23  cd
-   24  ls -al
    25  sudo chgrp ubuntu /mnt/volume/bench
-   26  ls -al /mnt/volume/bench
    27  ln -s /mnt/volume/bench bench
-   28  ls -al
-   29  cd bench
-   30  swift --os-tenant-name petasky --os-region-name RegionOne --os-username carnault --os-password ****** --os-auth-url https://auth.oscloud.isima.fr/v2.0 download lsst
+
+installation de swift
+
    31  sudo apt install swift
    32  swift
    33  sudo apt-get install clang libicu-dev
    34  which swift
-   35  ls /opt
-   36  ls /usr/
-   37* 
-   38  sudo apt-get find clang
-   39  swift
-   40  sudo apt
-   41  sudo apt list swift
-   42  sudo apt search swift
-   43  sudo apt update swift
-   44  sudo apt search swift
-   45  sudo apt list python
-   46  python
    47  sudo apt update python3
    48  sudo apt update python
    49  sudo apt update
    50  sudo apt update python
    51  sudo apt install python3
-   52  python
-   53  which python
-   54  ls /usr/bin/python3
-   55  /usr/bin/python3
-   56  sudo apt install swift
-   57  sudo apt install swift3
    58  sudo apt install swift
    59  sudo apt update swift
-   60  swift --os-tenant-name petasky --os-region-name RegionOne --os-username carnault --os-password ****** --os-auth-url https://auth.oscloud.isima.fr/v2.0 download lsst
-   61  swift --os-tenant-name petasky --os-region-name RegionOne --os-username carnault --os-password arnault7977 --os-auth-url https://auth.oscloud.isima.fr/v2.0 download lsst
    62  sudo apt install python3-swiftclient
-   63  swift --os-tenant-name petasky --os-region-name RegionOne --os-username carnault --os-password arnault7977 --os-auth-url https://auth.oscloud.isima.fr/v2.0 download lsst
-   64  history
+   63  swift --os-tenant-name petasky --os-region-name RegionOne --os-username carnault --os-password *** --os-auth-url https://auth.oscloud.isima.fr/v2.0 download lsst
 
-sudo apt update
 
-swift --os-tenant-name petasky --os-region-name RegionOne --os-username carnault --os-password **** --os-auth-url https://auth.oscloud.isima.fr/v2.0 download lsst
+swift --os-tenant-name petasky --os-region-name RegionOne --os-username carnault --os-password **** --os-auth-url https://auth.oscloud.isima.fr/v2.0 download lsst [*.csv]
 
+
+Object_6883.csv
+Source_9905.csv
+Source_6346.csv
+Source_7245.csv
+Source_6980.csv
+Source_2982.csv
+ForcedSource_9953.csv
+ForcedSource_4950.csv
+Source_6070.csv
+ForcedSource_10211.csv
+Source_6418.csv
+ForcedSource_8993.csv
+Object_3125.csv
+Source_6221.csv
+Source_4169.csv
+ObjectFullOverlap_2451.csv
+ObjectFullOverlap_5690.csv
+Object_6665.csv
+Source_9262.csv
+Object_5642.csv
+ForcedSource_10235.csv
+Source_4006.csv
+Object_3644.csv
+Source_4030.csv
+ObjectFullOverlap_9030.csv
+Source_3444.csv
+ForcedSource_8517.csv
+ObjectFullOverlap_10820.csv
+ForcedSource_2585.csv
+ForcedSource_6566.csv
+Object_7607.csv
+Source_9054.csv
+ForcedSource_6394.csv
+ForcedSource_7535.csv
+Source_4682.csv
+ForcedSource_7173.csv
+Source_6173.csv
+ObjectFullOverlap_2263.csv
+ObjectFullOverlap_6470.csv
+ForcedSource_5998.csv
+Source_7535.csv
+ObjectFullOverlap_6713.csv
+Object_4030.csv
+ObjectFullOverlap_9733.csv
+Object_3910.csv
+ObjectFullOverlap_3311.csv
+ObjectFullOverlap_5397.csv
+ForcedSource_6713.csv
+ForcedSource_4706.csv
+Source_9424.csv
+Object_7898.csv
+Object_7173.csv
+Source_8313.csv
+Source_8486.csv
+ForcedSource_4483.csv
+Source_9929.csv: Source_9929.csv
+Source_8589.csv
+Object_6094.csv
+ObjectFullOverlap_8565.csv
+ObjectFullOverlap_8849.csv
+Source_4352.csv
+ObjectFullOverlap_2403.csv
+Source_2561.csv
+Source_3644.csv
+Source_1713.csv
+Object_2427.csv
+ObjectFullOverlap_6859.csv
+ObjectFullOverlap_7052.csv
+Object_7874.csv
+ForcedSource_8390.csv
+Source_3468.csv
+Source_7922.csv
+ForcedSource_8169.csv
+Object_5115.csv
+Object_9757.csv
+Source_1737.csv
+ForcedSource_3149.csv
+Source_2215.csv
+ForcedSource_4256.csv
+ForcedSource_6149.csv
+Source_6641.csv
+ObjectFullOverlap_5421.csv
+ForcedSource_10653.csv
+ObjectFullOverlap_6518.csv
+ObjectFullOverlap_3468.csv
+Object_8217.csv
+Object_5301.csv
+ForcedSource_4328.csv
+ObjectFullOverlap_6046.csv
+ForcedSource_3468.csv
+ForcedSource_8718.csv
+Source_8945.csv
+Source_8541.csv
+Object_10235.csv
+ObjectFullOverlap_10653.csv
+ObjectFullOverlap_7221.csv
+ForcedSource_5187.csv
+ObjectFullOverlap_2910.csv
+ObjectFullOverlap_7245.csv
+Source_7438.csv
+ForcedSource_7752.csv
+Object_1550.csv
+ObjectFullOverlap_2045.csv
+ForcedSource_4006.csv
+Source_6149.csv
+ForcedSource_5325.csv
+Source_7704.csv
+ForcedSource_9030.csv
+ForcedSource_7076.csv
+ForcedSource_5301.csv
+ForcedSource_9805.csv
+ObjectFullOverlap_3958.csv
+Source_10653.csv
+Object_8742.csv
+ForcedSource_692.csv
+ObjectFullOverlap_6955.csv
+Source_4706.csv
+Source_2910.csv
+ForcedSource_6931.csv
+Source_3335.csv
+Object_7028.csv
+ObjectFullOverlap_2585.csv
+ForcedSource_6022.csv
+Object_3668.csv
+Source_8169.csv
+Source_8265.csv
+ForcedSource_4974.csv
+ForcedSource_2427.csv
+ObjectFullOverlap_6125.csv
+Source_8193.csv
+Object_6173.csv
+ForcedSource_2093.csv
+ObjectFullOverlap_7342.csv
+Object_7245.csv
+ForcedSource_3596.csv
+ForcedSource_10128.csv
+ObjectFullOverlap_4806.csv
+Source_4610.csv
+Source_8814.csv
+ForcedSource_7776.csv
+Object_2069.csv
+Object_10370.csv
+Object_3596.csv
+ForcedSource_9054.csv
+Source_6094.csv
+Source_8969.csv
+ForcedSource_5714.csv
+Source_6566.csv
+Object_6470.csv
+Object_8637.csv
+Object_4854.csv
+Object_4730.csv
+ForcedSource_8342.csv
+ObjectFullOverlap_5950.csv
+Object_3077.csv
+ObjectFullOverlap_5974.csv
+Object_2786.csv
+ObjectFullOverlap_5893.csv
+Object_6197.csv
+ForcedSource_3767.csv
+Object_8849.csv
+ForcedSource_9589.csv
+ForcedSource_6046.csv
+ObjectFullOverlap_3668.csv
+ObjectFullOverlap_5762.csv
+Source_8462.csv
+Object_7970.csv
+Object_1870.csv
+ObjectFullOverlap_7680.csv
+Source_3910.csv
+ForcedSource_10259.csv
+Object_4998.csv
+Source_6322.csv
+ForcedSource_8969.csv
+ObjectFullOverlap_1381.csv
+Source_4730.csv
+ObjectFullOverlap_7100.csv
+ForcedSource_8486.csv
+Source_10080.csv
+Object_2045.csv
+ObjectFullOverlap_6665.csv
+ForcedSource_8790.csv
+Source_10442.csv
+ObjectFullOverlap_8814.csv
+ObjectFullOverlap_7922.csv
+Source_4531.csv
+ForcedSource_1713.csv
+Object_10283.csv
+Object_8313.csv
+Source_7728.csv
+Source_10466.csv
+Object_7850.csv
+Source_5581.csv
+ForcedSource_7680.csv
+Object_4280.csv
+Source_5046.csv
+Source_5869.csv
+ForcedSource_7487.csv
+Object_10418.csv
+ObjectFullOverlap_6737.csv
+ForcedSource_8541.csv
+Source_7124.csv
+Source_5022.csv
+Object_6149.csv
+Object_6785.csv
+Object_9881.csv
+ObjectFullOverlap_10418.csv
+Source_3958.csv
+ForcedSource_4634.csv
+ForcedSource_4280.csv
+Object_9929.csv
+ObjectFullOverlap_5797.csv
+ForcedSource_5869.csv
+Source_9286.csv
+Source_6907.csv
+ForcedSource_8814.csv
+Object_5046.csv
+Source_1234567890.csv
+Source_3101.csv
+ObjectFullOverlap_3335.csv
+ForcedSource_8021.csv
+ObjectFullOverlap_7704.csv
+Object_3468.csv
+ObjectFullOverlap_9214.csv
+ObjectFullOverlap_10211.csv
+ObjectFullOverlap_5998.csv
+Source_6859.csv
+Object_1405.csv
+ForcedSource_1025.csv
+Object_5022.csv
+Source_7462.csv
+ObjectFullOverlap_6542.csv
+Object_4610.csv
+Object_8517.csv
+Source_7028.csv
+Source_1025.csv
+Object_3934.csv
+ForcedSource_3982.csv
+Object_3620.csv
+ForcedSource_9238.csv
+ObjectFullOverlap_9709.csv
+Object_8921.csv
+ForcedSource_7922.csv
+ForcedSource_8438.csv
+ObjectFullOverlap_8462.csv
+Object_3287.csv
+Object_2633.csv
+ObjectFullOverlap_5533.csv
+Source_4483.csv
+Source_6370.csv
+Source_10394.csv
+Source_5533.csv
+ObjectFullOverlap_10104.csv
+Object_8193.csv
+Object_10442.csv
+Source_10605.csv
+Source_5690.csv
+Source_10104.csv
+ForcedSource_7414.csv
+Object_3572.csv
+ForcedSource_6470.csv
+ForcedSource_8045.csv
+ForcedSource_6322.csv
+Source_9977.csv
+Source_9400.csv
+Source_10128.csv
+ForcedSource_3958.csv
+Object_7922.csv
+Object_7583.csv
+Object_5950.csv
+Source_8069.csv
+Source_4634.csv
+ObjectFullOverlap_1713.csv
+Source_10557.csv
+Object_8462.csv
+Object_5070.csv
+ObjectFullOverlap_4878.csv
+ForcedSource_9310.csv
+ObjectFullOverlap_8169.csv
+ForcedSource_9905.csv
+Source_3239.csv
+ForcedSource_7559.csv
+ForcedSource_10418.csv
+ForcedSource_7197.csv
+ForcedSource_1550.csv
+Object_3767.csv
+Source_5974.csv
+Source_10370.csv
+Source_10056.csv
+Source_5235.csv
+ForcedSource_2934.csv
+Object_3982.csv
+ForcedSource_3420.csv
+ObjectFullOverlap_10128.csv
+Object_6394.csv
+ForcedSource_8849.csv
+ObjectFullOverlap_3934.csv
+ObjectFullOverlap_4352.csv
+ForcedSource_3125.csv
+ForcedSource_6907.csv
+Object_10581.csv
+Object_10152.csv
+Object_10820.csv
+Source_1381.csv
+ForcedSource_6269.csv
+ObjectFullOverlap_5349.csv
+Object_6859.csv
+ObjectFullOverlap_2561.csv
+Object_7559.csv
+ObjectFullOverlap_9262.csv
+ObjectFullOverlap_8265.csv
+ObjectFullOverlap_5509.csv
+Object_5235.csv
+Object_9400.csv
+Object_2093.csv
+ObjectFullOverlap_516.csv
+Object_5373.csv
+Object_1737.csv
+Object_9030.csv
+Object_10080.csv
+ObjectFullOverlap_862.csv
+ObjectFullOverlap_9637.csv
+ObjectFullOverlap_1550.csv
+ForcedSource_5022.csv
+Source_3287.csv
+Object_7149.csv
+Source_5714.csv
+ObjectFullOverlap_9054.csv
+ObjectFullOverlap_7583.csv
+Object_6245.csv
+Source_4304.csv
+Object_10748.csv
+ObjectFullOverlap_3287.csv
+ForcedSource_9376.csv
+Object_4531.csv
+ObjectFullOverlap_6494.csv
+Object_4555.csv
+Source_2093.csv
+ForcedSource_5485.csv
+Object_9565.csv
+ObjectFullOverlap_7535.csv
+ForcedSource_4507.csv
+ObjectFullOverlap_8241.csv
+Object_1230.csv
+ForcedSource_4682.csv
+ForcedSource_6737.csv
+Source_2934.csv
+ObjectFullOverlap_7970.csv
+Source_5397.csv
+Source_1230.csv
