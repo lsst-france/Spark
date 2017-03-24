@@ -96,6 +96,8 @@ def read_data(file_name):
 
     print('using schema', schema_name)
 
+    return
+
     requests = []
 
     with open(file_name, 'rb') as f:
@@ -174,7 +176,6 @@ if __name__ == '__main__':
         Schemas[schema_name] = schema
 
 
-    for chunk in ('10653', '10056'):
-        read_data('Object_{}.csv'.format(chunk))
-        read_data('Source_{}.csv'.format(chunk))
-
+    for entry in os.scandir():
+        name = entry.name
+        read_data(name)

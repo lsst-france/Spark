@@ -1,23 +1,26 @@
-Création de la VM pour le bench QServ/Mongo
+Crï¿½ation de la VM pour le bench QServ/Mongo
 
 VM: c1.large 8C 40Go 4Mo
 Ubuntu Server 16.04 Desktop LTS(xenial)
 
 
-montage du volume attaché
+montage du volume attachï¿½
 
-    5  df -k
-    6  sudo ls /dev/disk/by-id/
-    7  sudo mkfs.ext4 /dev/disk/by-id/virtio-453879d6-d286-4747-a 
+si le volume est nouveau
+    7  sudo mkfs.ext4 /dev/disk/by-id/virtio-453879d6-d286-4747-a
                                              453879d6-d286-4747-a35a-81aa9bf17bb1
+
+
    11  sudo mkdir -p /mnt/volume
    12  sudo mount /dev/disk/by-id/virtio-453879d6-d286-4747-a /mnt/volume/
-   14  fs -k /mnt/volume/
    15  df -k
+
+si le volume est nouveau:
    17  cd /mnt/volume/
    20  sudo mkdir bench
    21  sudo chown ubuntu bench
    25  sudo chgrp ubuntu /mnt/volume/bench
+
    27  ln -s /mnt/volume/bench bench
 
 installation de swift
@@ -38,6 +41,22 @@ installation de swift
 
 
 swift --os-tenant-name petasky --os-region-name RegionOne --os-username carnault --os-password **** --os-auth-url https://auth.oscloud.isima.fr/v2.0 download lsst [*.csv]
+
+swift --os-tenant-name petasky --os-region-name RegionOne --os-username carnault --os-password arnault7977 --os-auth-url https://auth.oscloud.isima.fr/v2.0 list lsst | wc -l
+
+configuration de mongod:
+
+/etc/mongod.conf
+sudo service mongod start
+sudo service mongod status
+sudo service mongod stop
+
+
+extending the voume to 5To
+
+sudo e2fsck -f /dev/disk/by-id/virtio-453879d6-d286-4747-a
+sudo resize2fs /dev/disk/by-id/virtio-453879d6-d286-4747-a
+sudo mount /dev/disk/by-id/virtio-453879d6-d286-4747-a /mnt/volume
 
 
 Object_6883.csv
