@@ -178,4 +178,6 @@ if __name__ == '__main__':
 
     for entry in os.scandir():
         name = entry.name
+        print(name)
         read_data(name)
+
