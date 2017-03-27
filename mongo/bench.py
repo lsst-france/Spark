@@ -1,14 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os, glob
 import random
 import pymongo
 import bson
 import decimal
+import re
 from pymongo.errors import BulkWriteError
 
 MONGO_URL = r'mongodb://127.0.0.1:27017'
 # MONGO_URL = r'mongodb://134.158.75.222:27017'
+MONGO_URL = r'mongodb://192.168.56.233:27017'
+
+HOME = '/home/ubuntu/Spark/mongo/'
 
 import time
 
@@ -47,7 +52,9 @@ def read_schema():
     schema = None
     schema_name = None
 
-    with open('schema.sql', 'rb') as f:
+    types = dict()
+
+    with open(HOME + 'schema.sql', 'rb') as f:
         in_schema = False
 
         for line in f:
@@ -72,6 +79,8 @@ def read_schema():
                 field = words[0][1:-1]
                 ftype = words[1]
 
+                types[ftype] = True
+
                 schema.add_field(field, ftype)
 
             else:
@@ -82,64 +91,42 @@ def read_schema():
                     print(schema_name)
                     schema = Schema(schema_name)
 
+    print(types)
 
-def read_data(file_name):
-    schema = None
-    for schema_name in Schemas:
-        if file_name.startswith(schema_name):
-            schema = Schemas[schema_name]
-            break
 
-    if schema is None:
-        print('no schema')
-        return
+def build_request(words, fields, schema):
+    obj = dict()
+    for item, word in enumerate(words):
+        field = fields[item]
 
-    print('using schema', schema_name)
+        if field not in schema.fields:
+            print('error')
+            return None
 
-    return
+        ftype = schema.fields[field]
 
-    requests = []
+        if word == 'NULL':
+            value = None
+            continue
 
-    with open(file_name, 'rb') as f:
-        header = True
-        line_num = 0
-        for line in f:
-            line = line.strip().decode('utf-8')
-            line_num += 1
-            if (line_num % 1000) == 0:
-                print(line_num)
-            words = line.split(';')
-            if header:
-                header = False
-                fields = words.copy()
-                continue
+        if ftype == 'bit(1)':
+            value = int(word)
+        elif ftype == 'int(11)':
+            value = int(word)
+        elif ftype == 'bigint(20)':
+            value = int(word)
+        elif ftype == 'double':
+            value = float(word)
+        elif ftype == 'float':
+            value = float(word)
 
-            obj = dict()
-            for item, word in enumerate(words):
-                field = fields[item]
-                if field not in schema.fields:
-                    print('error')
-                    return
 
-                ftype = schema.fields[field]
+        # print(field, '=', value)
+        obj[field] = value
 
-                if word == 'NULL':
-                    value = None
-                else:
-                    if ftype == 'bit(1)':
-                        value = int(word)
-                    elif ftype == 'int(11)':
-                        value = int(word)
-                    elif ftype == 'bigint(20)':
-                        value = int(word)
-                    elif ftype == 'double':
-                        value = float(word)
+    return pymongo.InsertOne(obj)
 
-                    # print(field, '=', value)
-                    obj[field] = value
-
-            requests.append(pymongo.InsertOne(obj))
-
+def commit(requests, schema):
     total = 0
     col = schema.collection
     for retry in range(10):
@@ -150,8 +137,55 @@ def read_data(file_name):
             break
             # print('object inserted')
         except BulkWriteError as bwe:
-            print(retry, bwe.details)
+            print('error in bulk write', retry, bwe.details)
             continue
+
+
+def read_data(file_name):
+    schema = None
+    name = file_name.split('/')[-1]
+    m = re.match('([^_]+)[_]([\d]*)', name)
+    try:
+        schema_name = m.group(1)
+        chunk = m.group(2)
+        print(name, schema_name, chunk)
+    except:
+        print('???', file_name)
+
+    if schema_name in Schemas:
+        schema = Schemas[schema_name]
+
+    if schema is None:
+        print('no schema')
+        return
+
+    print('file', file_name, 'using schema', schema_name)
+
+    requests = []
+
+    with open(file_name, 'rb') as f:
+        header = True
+        line_num = 0
+        for line in f:
+            line = line.strip().decode('utf-8')
+            line_num += 1
+            if (line_num % 100000) == 0:
+                print(line_num)
+            words = line.split(';')
+            if header:
+                header = False
+                fields = words.copy()
+                continue
+
+            request = build_request(words, fields, schema)
+            requests.append(request)
+
+            if len(requests) == 100000:
+                commit(requests, schema)
+                requests = []                
+
+    if len(requests) > 0:
+        commit(requests, schema)
 
 if __name__ == '__main__':
     bench = None
@@ -160,24 +194,67 @@ if __name__ == '__main__':
 
     read_schema()
 
+    print('schemas defined')
+
     recreate = True
 
     if recreate:
-        try:
-            for schema_name in Schemas:
+        for schema_name in Schemas:
+            try:
+                print('dropping collection for ', schema_name)
                 lsst.drop_collection(schema_name)
-        except:
-            pass
+            except:
+                print('cannot drop collection for ', schema_name)
+                pass
 
     for schema_name in Schemas:
-        col = lsst[schema_name]
-        schema = Schemas[schema_name]
-        schema.set_collection(col)
-        Schemas[schema_name] = schema
+        try:
+            print('setting collection', schema_name)
+            col = lsst[schema_name]
+            schema = Schemas[schema_name]
+            schema.set_collection(col)
+            Schemas[schema_name] = schema
+        except:
+            print('cannot set collection', schema_name)
 
 
-    for entry in os.scandir():
-        name = entry.name
-        print(name)
-        read_data(name)
+    class Dataset(object):
+        def __init__(self):
+            self.schemas = dict()
+
+    datasets = dict()
+
+
+    p = '/mnt/volume/dataset/'
+
+    for file_name in glob.glob(p + '*'):
+        name = file_name.split('/')[-1]
+        m = re.match('([^_]+)[_](\d+)[.]csv', name)
+        try:
+            schema = m.group(1)
+            chunk = int(m.group(2))
+        except:
+            continue
+
+        if chunk in datasets:
+            ds = datasets[chunk]
+            ds.schemas[schema] = True
+        else:
+            ds = Dataset()
+            ds.schemas[schema] = True
+
+        datasets[chunk] = ds
+
+        # print(chunk, sorted(ds.schemas.keys()))
+
+
+    for chunk in sorted(datasets.keys()):
+        ds = datasets[chunk]
+        schemas = sorted(ds.schemas.keys())
+        fs = ['{}_{}.csv'.format(s, chunk) for s in schemas]
+        print('====================== Chunk', chunk, ' => read files:', fs)
+
+        for f in fs:
+            print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>', p + f)
+            # read_data(p + f)
 

@@ -258,7 +258,7 @@ CREATE TABLE `Object` (
   KEY `subChunkId` (`subChunkId`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
-CREATE TABLE `ObjectFullOverlap_0` (
+CREATE TABLE `ObjectFullOverlap` (
   `deepSourceId` bigint(20) NOT NULL,
   `ra` double NOT NULL,
   `decl` double NOT NULL,
