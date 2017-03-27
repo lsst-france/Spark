@@ -16,12 +16,15 @@ si le volume est nouveau
    15  df -k
 
 si le volume est nouveau:
-   17  cd /mnt/volume/
-   20  sudo mkdir bench
-   21  sudo chown ubuntu bench
-   25  sudo chgrp ubuntu /mnt/volume/bench
+cd /mnt/volume/
+sudo mkdir /mnt/volume/dataset
+sudo mkdir /mnt/volume/mongodb
+sudo chown ubuntu /mnt/volume/dataset
+sudo chgrp ubuntu /mnt/volume/dataset
+sudo chown mongodb /mnt/volume/mongodb
+sudo chgrp mongodb /mnt/volume/mongodb
 
-   27  ln -s /mnt/volume/bench bench
+   27  ln -s /mnt/volume volume
 
 installation de swift
 

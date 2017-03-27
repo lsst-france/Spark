@@ -53,6 +53,8 @@ def read_schema():
     schema_name = None
 
     types = dict()
+    keys = dict()
+    primaries = None
 
     with open(HOME + 'schema.sql', 'rb') as f:
         in_schema = False
@@ -65,6 +67,13 @@ def read_schema():
                     schema = None
                     schema_name = None
                     in_schema = False
+
+                    print('primary key = ', primaries)
+                    print('keys = ', keys)
+
+                    keys = dict()
+                    primaries = None
+
                     continue
 
                 words = line.split(' ')
@@ -72,8 +81,21 @@ def read_schema():
                 if len(words) == 0:
                     continue
                 if words[0] == 'PRIMARY':
+                    for word in words:
+                        if word.startswith('('):
+                            word = re.sub('[(]', '', word)
+                            word = re.sub('[)]', '', word)
+                            word = re.sub('[`]', '', word)
+                            items = word.split(',')
+                            primaries = items
                     continue
                 if words[0] == 'KEY':
+                    for word in words:
+                        if word.startswith('('):
+                            word = re.sub('[(]', '', word)
+                            word = re.sub('[)]', '', word)
+                            word = re.sub('[`]', '', word)
+                            keys[word] = True
                     continue
 
                 field = words[0][1:-1]
