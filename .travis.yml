@@ -2,7 +2,7 @@ language: python
 
 addons:
     sonarqube:
-        organization: "lsst-france"
+        organization: "christianarnault-github"
         token:
             secure: "4f84d9922b72ce06a400076583fc02559fffaad7"
         branches:
