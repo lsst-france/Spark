@@ -11,10 +11,10 @@ from pymongo.errors import BulkWriteError
 
 MONGO_URL = r'mongodb://127.0.0.1:27017'
 # MONGO_URL = r'mongodb://134.158.75.222:27017'
-MONGO_URL = r'mongodb://192.168.56.233:27017'
+MONGO_URL = r'mongodb://192.168.56.233:27117'
 
 HOME = '/home/ubuntu/Spark/mongo/'
-REQUEST_SIZE = 10000
+REQUEST_SIZE = 100000
 
 import time
 
@@ -143,52 +143,41 @@ def build_request(words, fields, schema):
             value = None
             continue
 
-        if ftype == 'bit(1)':
-            value = int(word)
-        elif ftype == 'int(11)':
-            value = int(word)
-        elif ftype == 'bigint(20)':
-            value = int(word)
-        elif ftype == 'double':
-            value = float(word)
-        elif ftype == 'float':
-            value = float(word)
+        try:
+            if ftype == 'bit(1)':
+                value = int(word)
+            elif ftype == 'int(11)':
+                value = int(word)
+            elif ftype == 'bigint(20)':
+                value = int(word)
+            elif ftype == 'double':
+                value = float(word)
+            elif ftype == 'float':
+                value = float(word)
+        except:
+            # we keep value as a string
+            print('field:', field, 'value:', value)
+            pass
 
 
         # print(field, '=', value)
         obj[field] = value
-
-    col = schema.collection
-    if schema.primary is not None:
-        col = schema.collection
-        query = dict()
-        for k in schema.primary:
-            query[k] = obj[k]
-
-        result = col.find_one(query, {'_id':1})
-        if result is not None:
-            # print('object already stored Query=', query)
-            return None
-
-        # print('Creating obj')
 
     return pymongo.InsertOne(obj)
 
 def commit(requests, schema):
     total = 0
     col = schema.collection
-    for retry in range(10):
-        try:
-            result = col.bulk_write(requests)
-            total += result.inserted_count
-            print(total)
-            break
-            # print('object inserted')
-        except BulkWriteError as bwe:
-            print('error in bulk write', retry, bwe.details)
-            continue
+    try:
+        result = col.bulk_write(requests)
+        total += result.inserted_count
+        # print(total)
+        # print('object inserted')
+    except BulkWriteError as bwe:
+        # print('error in bulk write', retry, bwe.details)
+        pass
 
-    return False
+    return True
 
 
 def read_data(file_name):
@@ -240,6 +229,7 @@ def read_data(file_name):
 
     if len(requests) > 0:
         status = commit(requests, schema)
+
     return status
 
 if __name__ == '__main__':
@@ -272,14 +262,22 @@ if __name__ == '__main__':
         except:
             print('cannot set collection', schema_name)
 
+        if schema.primary is not None:
+            spec = []
+            for k in schema.primary:
+                spec.append((k, pymongo.DESCENDING))
+            # col.create_index(query, {'unique': True})
+            col.create_index(spec, unique=True)
 
     class Dataset(object):
         def __init__(self):
             self.schemas = dict()
 
+
     datasets = dict()
 
     p = '/mnt/volume/dataset/'
+    sav = '/mnt/volume/dataset_save/'
 
     for file_name in glob.glob(p + '*'):
         name = file_name.split('/')[-1]
@@ -311,9 +309,8 @@ if __name__ == '__main__':
 
         for f in fs:
             print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>', p + f)
-            read_data(p + f)
-            break
-
-        break
+            status = read_data(p + f)
+            if status:
+                os.rename(p + f, sav + f)
 
 
