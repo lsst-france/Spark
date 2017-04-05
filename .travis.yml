@@ -4,7 +4,7 @@ addons:
     sonarqube:
         organization: "christianarnault-github"
         token:
-            secure: "4f84d9922b72ce06a400076583fc02559fffaad7"
+            secure: "kl09woC1ypUsH+57ESXiR+lGYoJ3B/QURBYkhJHsr7DDrlc4qmbr9qmorIOYIG9GQ8qSHO5/l5939PNeqyqUnGXwTORnoy1E68Oyvo/ex9uvE1Y1fGcRokBTF4jM5DP+m7xxI13Q6mY38v/MwpoFUs6Wj+vGUxSUfCVc0/htM+3xzJQ0D365sKIv7zsFDMNab7xAwT9eCiOwFiNzyopEL2yj3ajLZ1HRAIKl2WHydelknZ45k3lGYm9x438JZBPQPe8PJWqlbrfZa6YTYBzLJMAYk5VajjURA/AoFGMPFDP5hls2AwvLtjFlCn/hNjfwc4oyVJtvioOCSIDRWRoKI35sQEq6fo2fpEh/UbHkM4PsoEiNC4yZL4PToK42uYcYE3QT1xpzXBBfx5r8d9oyPnUb7XoxBQUGlypGInIy7pOwJT6+4wBIvtvw+RciBDEvrbcoyIiIsXvGBj2TgCOZLPOF7P9y9CUKwf6LB+A1kwhEEAYO9gPI+tpWFZkeuZAqwlJ53Fxf4tjxTdZutjdAUmUjTT47uIKFCTtn1CDQqcwqCHMOmJaLcIFlEruF9QdHTnbSc0J2CBC5WdkE3DtrBPwdaP1PO6T1wTo5T9st3CRlRii0o1H/9j82vpW2zsLVpsCzuwUShC3uQdg7ulruiywOTt3nWYxYy8g8DSi2Uls="
         branches:
             - master
 
