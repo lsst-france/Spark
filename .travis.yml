@@ -9,5 +9,6 @@ addons:
         branches:
             - master
 
+
 script:
 - sonar-scanner
