@@ -1,0 +1,14 @@
+language: java
+jdk: oraclejdk8
+
+addons:
+    sonarqube:
+        organization: "christianarnault-github"
+        token:
+            secure: "LQ8yUipHhHMky63gpZGj8XewRtHU2QKnz0CW8w9j4ZtLcBM2EIvFnOMXTEyoF3GIEE2HVxcgyLhw5uyDzut6Xz9QfPfl+HRrRrh81FmoO2y833LwKibZ2pCxg57yKR/VEsIhMrIwb3QBCzWhtMK+tuy10dFpq8++pL+bTBjgjcfKwrNfk/NfKL4hAUAL3frycr24UkJLJ9N0nQdX0xr8Z9sJjo86TTrhHl2u14dS6hRf3IWgYx3woZMFH4TAx8fRf/w8gC1rEApbs9C55goCl5milloCaxQchx6sGVg4aBi7YdlXNiaUhcieLYJVqLJxuM19ObHIk3k6LeVAM7mhNCEV1aAdTg+Z6jlnb9sm5LG/YuOzzFxZfm7UoI3cmpZqOSdXW2R5oT3MpuC72GCSaL3N1/tZtc3MkheuM+Jwyw0OEvRIrrhelwCXAHtOecI2b9Kr43xjhplTnG+x4hI8qzuURHSyvN+aF4Nxhs8Ofiwrjg38RlVitGnI7UQz6GIIu4gu1lELPB0gOQ4T3ECPuPkhBAymLQCyg4yu9Y82ZCRiZtQq/KB8lkBYlQMzVIMS7ffUSQKgbUKuv2C2dwrqE13UATXWqLzx+jF0jA+K1tERhsoFxlkWkBCSl3gPbn+qXCaMGmmrvzv+KBv7/+pY58KH1LPOZHguIf91u+RrPIo="
+        branches:
+            - master
+
+
+script:
+- sonar-scanner
