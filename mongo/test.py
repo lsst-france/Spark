@@ -10,34 +10,88 @@ import decimal
 import re
 from pymongo.errors import BulkWriteError
 
-MONGO_URL = r'mongodb://192.168.56.233:27017'
+import stepper as st
+
+MONGO_URL = r'mongodb://192.168.56.233:27117'
 
 print(pymongo.version)
 
 """
-{ "_id" : ObjectId("58d9027fa1c96cadd46c471c"), "id" : 1 }
-{ "_id" : ObjectId("58d90284a1c96cadd46c471d"), "id" : 2 }
-{ "_id" : ObjectId("58d90287a1c96cadd46c471e"), "id" : 3 }
-{ "_id" : ObjectId("58d90289a1c96cadd46c471f"), "id" : 4 }
-{ "_id" : ObjectId("58d9028ba1c96cadd46c4720"), "id" : 5 }
-{ "_id" : ObjectId("58d9028ea1c96cadd46c4721"), "id" : 6 }
-{ "_id" : ObjectId("58d90ffd2548868845a6aefd"), "id" : 12, "id2" : 23 }
-{ "_id" : ObjectId("58d910012548868845a6aefe"), "id" : 13, "id2" : 23 }
-{ "_id" : ObjectId("58d910162548868845a6aeff"), "id" : 14, "id2" : 24 }
-{ "_id" : ObjectId("58d9101d2548868845a6af00"), "id" : 15, "id2" : 25 }
+select count(*) from Object;
 """
 
 if __name__ == '__main__':
     client = pymongo.MongoClient(MONGO_URL)
     lsst = client.lsst
 
-    col = lsst.test
+    #---------------------------------------------------------------------------------
+    dataset = lsst.Object
 
-    col.create_index( [ ('id', pymongo.ASCENDING), ('id2', pymongo.ASCENDING) ] , unique=True)
+    stepper = st.Stepper()
 
     try:
-        status = col.find_one_and_update({'id':134, 'id2':25}, { '$set': {'id':134, 'id2':244466}}, upsert=True)
-        print('created')
+        result = dataset.count()
+        print(result)
     except:
-        print('object already there')
+        print('error')
+
+    stepper.show_step('select count(*) from Object')
+
+    #---------------------------------------------------------------------------------
+    dataset = lsst.Source
+
+    stepper = st.Stepper()
+
+    try:
+        result = dataset.count()
+        print(result)
+    except:
+        print('error')
+
+    stepper.show_step('select count(*) from Source')
+
+    #---------------------------------------------------------------------------------
+    dataset = lsst.ForcedSource
+
+    stepper = st.Stepper()
+
+    try:
+        result = dataset.count()
+        print(result)
+    except:
+        print('error')
+
+    stepper.show_step('select count(*) from ForcedSource')
+
+    #---------------------------------------------------------------------------------
+    dataset = lsst.Object
+
+    stepper = st.Stepper()
+
+    id = 2322374716295173
+    try:
+        result = dataset.find( {'deepSourceId': id}, {'_id': 0, 'ra': 1, 'decl': 1})
+        for o in result:
+            print(o)
+    except:
+        print('error')
+
+    stepper.show_step('SELECT ra, decl FROM Object WHERE deepSourceId = {};'.format(id))
+
+    #---------------------------------------------------------------------------------
+    dataset = lsst.Object
+
+    stepper = st.Stepper()
+
+    try:
+        result = dataset.find({ "loc": {"$geoWithin":{"$box":[[-103,10.1],[-80.43,30.232]]}} }
+        result = dataset.find( {'deepSourceId': id}, {'_id': 0, 'ra': 1, 'decl': 1})
+        result = dataset.find({'center': {'$geoWithin': {'$centerSphere': [[cluster.ra(), cluster.dec()], radius]}}}
+        for o in result:
+            print(o)
+    except:
+        print('error')
+
+    stepper.show_step('SELECT ra, decl FROM Object WHERE qserv_areaspec_box(0.95, 19.171, 1.0, 19.175);')
+
 
