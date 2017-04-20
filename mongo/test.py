@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 
+import sys
 import os, glob
 import random
 import pymongo
@@ -108,11 +109,16 @@ def test8(dataset):
     stepper = st.Stepper()
 
     try:
-        result = dataset.create_index( [ ('ra', pymongo.ASCENDING), ('decl', pymongo.ASCENDING) ] )
+        result = dataset.create_index( [ ('ra', pymongo.ASCENDING) ] )
     except pymongo.errors.PyMongoError as e:
-        print('error create index on ra, decl', e)
+        print('error create index on ra', e)
 
-    stepper.show_step('create index on ra, decl')
+    try:
+        result = dataset.create_index( [ ('decl', pymongo.ASCENDING) ] )
+    except pymongo.errors.PyMongoError as e:
+        print('error create index on decl', e)
+
+    stepper.show_step('create indexes on ra, decl')
 
 def test9(dataset):
     stepper = st.Stepper()
@@ -183,23 +189,50 @@ def test14(dataset):
 
 
 if __name__ == '__main__':
+
+    args = len(sys.argv)
+    if args < 2:
+        print('give the test numbers')
+        exit()
+
     client = pymongo.MongoClient(MONGO_URL)
     lsst = client.lsst
 
-    test1(lsst.Object)
-    test2(lsst.Source)
-    test3(lsst.ForcedSource)
-    test4(lsst.Object)
-    test5(lsst.Object)
-    #test6(lsst.Object)
-    test7(lsst.Object)
-    test8(lsst.Object)
-    test9(lsst.Object)
-    test10(lsst.Source)
-    test11(lsst.Source)
-    test12(lsst.Source)
-    test13(lsst.ForcedSource)
-    test14(lsst.ForcedSource)
+    for i, arg in enumerate(sys.argv):
+        if i == 0:
+            continue
+
+        if arg == "1":
+            test1(lsst.Object)
+        elif arg == "2":
+            test2(lsst.Source)
+        elif arg == "3":
+            test3(lsst.ForcedSource)
+        elif arg == "4":
+            test4(lsst.Object)
+        elif arg == "5":
+            test5(lsst.Object)
+        elif arg == "6":
+            #test6(lsst.Object)
+            pass
+        elif arg == "7":
+            test7(lsst.Object)
+        elif arg == "8":
+            test8(lsst.Object)
+        elif arg == "9":
+            test9(lsst.Object)
+        elif arg == "10":
+            test10(lsst.Source)
+        elif arg == "11":
+            test11(lsst.Source)
+        elif arg == "12":
+            test12(lsst.Source)
+        elif arg == "13":
+            test13(lsst.ForcedSource)
+        elif arg == "14":
+            test14(lsst.ForcedSource)
+
+
 
 """
 select count(*) 
