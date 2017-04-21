@@ -1,0 +1,50 @@
+
+select count(*) from Object where y_instFlux > 5;                           (4 min 7.61 sec)
+select min(ra), max(ra), min(decl), max(decl) from Object;                  (4 min 4.24 sec)
+select count(*) from Source where flux_sinc between 1 and 2;                (18 min 8.09 sec)
+select count(*) from Source where flux_sinc between 2 and 3;                (17 min 57.38 sec)
+select count(*) from ForcedSource where psfFlux between 0.1 and 0.2;        (14 min 58.61 sec)
+
+Joins
+
+select count(*) from Object o, Source s WHERE o.deepSourceId=s.objectId AND s.flux_sinc BETWEEN 0.13 AND 0.14;           (23 min 1.44 sec)
+select count(*) FROM Object o, ForcedSource f WHERE o.deepSourceId=f.deepSourceId AND f.psfFlux BETWEEN 0.13 AND 0.14;   (21 min 31.38 sec)
+
+Near neighbor
+
+select count(*) 
+from Object o1, Object o2 
+where qserv_areaspec_box(90.299197, -66.468216, 98.762526, -56.412851) and scisql_angSep(o1.ra, o1.decl, o2.ra, o2.decl) < 0.015;   (11 min 16.02 sec)
+
+Shared scans
+
+Two scans on Object, both finished in ~8.5 min or so. Startup was staggered.
+
+QTYPE_FTSObj: 505.703582048  SELECT COUNT(*) FROM Object WHERE y_instFlux > 5
+QTYPE_FTSObj: 505.837508917  SELECT MIN(ra), MAX(ra) FROM Object WHERE decl > 3
+
+Five scans on Object finished in 16-20 min. Startup was staggered.
+
+QTYPE_FTSObj: 990.450098038 SELECT MIN(ra), MAX(ra) FROM Object WHERE decl > 3
+QTYPE_FTSObj: 1168.69941115 SELECT MIN(ra), MAX(ra) FROM Object WHERE decl > 3
+QTYPE_FTSObj: 1180.72830892 SELECT COUNT(*) FROM Object WHERE y_instFlux > u_instFlux
+QTYPE_FTSObj: 1178.19018197 SELECT COUNT(*) FROM Object WHERE y_instFlux > 5
+QTYPE_FTSObj: 1173.29835892 SELECT MIN(ra), MAX(ra) FROM Object WHERE z_apFlux BETWEEN 1 and 2
+
+Five scans on Object, without staggering, not much difference:
+
+QTYPE_FTSObj: 738.438729763 SELECT COUNT(*) FROM Object WHERE y_instFlux > 5
+QTYPE_FTSObj: 1162.67162609 left 2437.32837391 SELECT MIN(ra), MAX(ra) FROM Object WHERE decl > 3
+QTYPE_FTSObj: 1169.67710209 left 2430.32289791 SELECT COUNT(*) FROM Object WHERE y_instFlux > 5
+QTYPE_FTSObj: 1171.61784506 left 2428.38215494 SELECT COUNT(*) FROM Object WHERE y_instFlux > 5
+QTYPE_FTSObj: 1171.95623493 left 2428.04376507 SELECT COUNT(*) AS n, AVG(ra), AVG(decl), chunkId FROM Object GROUP BY chunkId
+
+Five scans: four on Object, one on Source: ~1h10 min per scan
+
+QTYPE_FTSObj: 4237.70917988 SELECT MIN(ra), MAX(ra) FROM Object WHERE decl > 3
+QTYPE_FTSObj: 4262.98238802 SELECT COUNT(*) FROM Object WHERE y_instFlux > 5
+QTYPE_FTSObj: 4263.39259911SELECT COUNT(*) FROM Object WHERE y_instFlux > 5
+QTYPE_FTSObj: 4263.39338088 SELECT COUNT(*) FROM Object WHERE y_instFlux > 5
+QTYPE_FTSSrc: 4264.03135395 SELECT COUNT(*) FROM Source WHERE flux_sinc BETWEEN 1 AND 2
+
+

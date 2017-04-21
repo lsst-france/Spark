@@ -235,6 +235,8 @@ def read_data(file_name):
 
                 requests = []                
 
+    status = True
+
     if len(requests) > 0:
         status = commit(requests, schema)
 
