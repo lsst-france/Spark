@@ -124,9 +124,14 @@ def test9(dataset):
     stepper = st.Stepper()
 
     try:
-        result = dataset.aggregate( [ { '$group': { '_id': '', 'min_ra': { '$min': '$ra' }, 'max_ra': { '$max': '$ra' }, 'min_decl': { '$min': '$decl' }, 'max_decl': { '$max': '$decl' } } } ] )
+        min_ra = dataset.find().sort( {'ra': 1} ).limit(1)
+        max_ra = dataset.find().sort( {'ra': -1} ).limit(1)
+        min_decl = dataset.find().sort( {'decl': 1} ).limit(1)
+        max_decl = dataset.find().sort( {'decl': -1} ).limit(1)
     except pymongo.errors.PyMongoError as e:
-        print('error aggregate', e)
+        print('error min, max', e)
+
+    print('ra= [', min_ra, ',', max_ra, '] decl= [', min_decl, ',', max_decl, ']')
 
     stepper.show_step('select min(ra), max(ra), min(decl), max(decl) from Object;')
 
