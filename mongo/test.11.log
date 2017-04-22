@@ -1,0 +1,7 @@
+3.4.0
+Traceback (most recent call last):
+  File "test.py", line 227, in <module>
+    test11(lsst.Source)
+  File "test.py", line 147, in test11
+    filter = { 'flux_sinc': { '$and': [{ '$gt': 1 }, {{ '$lt': 2 }}] } }
+TypeError: unhashable type: 'dict'

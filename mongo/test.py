@@ -124,9 +124,14 @@ def test9(dataset):
     stepper = st.Stepper()
 
     try:
-        result = dataset.aggregate( [ { '$group': { '_id': '', 'min_ra': { '$min': '$ra' }, 'max_ra': { '$max': '$ra' }, 'min_decl': { '$min': '$decl' }, 'max_decl': { '$max': '$decl' } } } ] )
+        min_ra = dataset.find().sort( {'ra': 1} ).limit(1)
+        max_ra = dataset.find().sort( {'ra': -1} ).limit(1)
+        min_decl = dataset.find().sort( {'decl': 1} ).limit(1)
+        max_decl = dataset.find().sort( {'decl': -1} ).limit(1)
     except pymongo.errors.PyMongoError as e:
-        print('error aggregate', e)
+        print('error min, max', e)
+
+    print('ra= [', min_ra, ',', max_ra, '] decl= [', min_decl, ',', max_decl, ']')
 
     stepper.show_step('select min(ra), max(ra), min(decl), max(decl) from Object;')
 
@@ -144,7 +149,7 @@ def test11(dataset):
     stepper = st.Stepper()
 
     try:
-        filter = { 'flux_sinc': { '$and': [{ '$gt': 1 }, {{ '$lt': 2 }}] } }
+        filter = { '$and': [ { 'flux_sinc': { '$gt': 1 } }, { 'flux_sinc': { '$lt': 2 } } ] }
         result = dataset.count( filter )
         print(result)
     except pymongo.errors.PyMongoError as e:
@@ -156,7 +161,7 @@ def test12(dataset):
     stepper = st.Stepper()
 
     try:
-        filter = { 'flux_sinc': { '$and': [{ '$gt': 2 }, {{ '$lt': 3 }}] } }
+        filter = { '$and': [ { 'flux_sinc': { '$gt': 2 } }, { 'flux_sinc': { '$lt': 3 } } ] }
         result = dataset.count( filter )
         print(result)
     except pymongo.errors.PyMongoError as e:
