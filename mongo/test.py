@@ -144,7 +144,7 @@ def test11(dataset):
     stepper = st.Stepper()
 
     try:
-        filter = { 'flux_sinc': { '$and': [{ '$gt': 1 }, {{ '$lt': 2 }}] } }
+        filter = { '$and': [ { 'flux_sinc': { '$gt': 1 } }, { 'flux_sinc': { '$lt': 2 } } ] }
         result = dataset.count( filter )
         print(result)
     except pymongo.errors.PyMongoError as e:
@@ -156,7 +156,7 @@ def test12(dataset):
     stepper = st.Stepper()
 
     try:
-        filter = { 'flux_sinc': { '$and': [{ '$gt': 2 }, {{ '$lt': 3 }}] } }
+        filter = { '$and': [ { 'flux_sinc': { '$gt': 2 } }, { 'flux_sinc': { '$lt': 3 } } ] }
         result = dataset.count( filter )
         print(result)
     except pymongo.errors.PyMongoError as e:

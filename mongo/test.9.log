@@ -1,0 +1,2 @@
+3.4.0
+-------------------------------- select min(ra), max(ra), min(decl), max(decl) from Object; 7199.229 seconds
