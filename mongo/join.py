@@ -31,14 +31,15 @@ def test9(dataset):
     stepper = st.Stepper()
 
     try:
-        min_ra = dataset.find().sort( {'loc.0': 1} ).limit(1)
-        max_ra = dataset.find().sort( {'loc.0': -1} ).limit(1)
-        min_decl = dataset.find().sort( {'loc.1': 1} ).limit(1)
-        max_decl = dataset.find().sort( {'loc.1': -1} ).limit(1)
+        min_ra = dataset.find( {}, {'_id':0, 'loc':1}).sort( 'loc.0', 1 ).limit(1)[0]['loc'][0]
+        max_ra = dataset.find( {}, {'_id':0, 'loc':1}).sort( 'loc.0', -1 ).limit(1)[0]['loc'][0]
+        min_decl = dataset.find( {}, {'_id':0, 'loc':1}).sort( 'loc.1', 1 ).limit(1)[0]['loc'][1]
+        max_decl = dataset.find( {}, {'_id':0, 'loc':1}).sort( 'loc.1', -1 ).limit(1)[0]['loc'][1]
     except pymongo.errors.PyMongoError as e:
         print('error min, max', e)
 
-    print('ra= [', min_ra, ',', max_ra, '] decl= [', min_decl, ',', max_decl, ']')
+    print('ra= [', min_ra, ',', max_ra, ']')
+    print('decl= [', min_decl, ',', max_decl, ']')
 
     stepper.show_step('select min(ra), max(ra), min(decl), max(decl) from Object;')
 
@@ -83,14 +84,14 @@ if __name__ == '__main__':
 
     stepper = st.Stepper()
     try:
-        lsst.y.create_index([('loc.0', 1)])
+        lsst.y.create_index([('loc.0', pymongo.ASCENDING)])
     except pymongo.errors.PyMongoError as e:
         print('error create index on ra', e)
     stepper.show_step('index creation')
 
     stepper = st.Stepper()
     try:
-        lsst.y.create_index([('loc.1', pymongo.GEO2D)])
+        lsst.y.create_index([('loc.1', pymongo.ASCENDING)])
     except pymongo.errors.PyMongoError as e:
         print('error create index on decl', e)
     stepper.show_step('index creation')
