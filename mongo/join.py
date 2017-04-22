@@ -13,8 +13,8 @@ from pymongo.errors import BulkWriteError
 import stepper as st
 
 GALACTICA = False
-WINDOWS = True
-LAL = False
+WINDOWS = False
+LAL = True
 
 if GALACTICA:
     MONGO_URL = r'mongodb://192.168.56.233:27117'
@@ -90,6 +90,7 @@ if __name__ == '__main__':
 
 
     stepper = st.Stepper()
+
     result = lsst.y.aggregate( [
         {'$geoNear': {
             'near': [0, 0],
