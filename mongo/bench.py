@@ -9,11 +9,19 @@ import decimal
 import re
 from pymongo.errors import BulkWriteError
 
-MONGO_URL = r'mongodb://127.0.0.1:27017'
-# MONGO_URL = r'mongodb://134.158.75.222:27017'
-MONGO_URL = r'mongodb://192.168.56.233:27117'
+LAL = True
 
-HOME = '/home/ubuntu/Spark/mongo/'
+MONGO_URL = r'mongodb://127.0.0.1:27017'
+
+if LAL:
+    MONGO_URL = r'mongodb://134.158.75.222:27017'
+    HOME = '/home/christian.arnault/LSSTSpark/mongo/'
+    BASE_DATASET = '/home/christian.arnault/'
+else:
+    MONGO_URL = r'mongodb://192.168.56.233:27117'
+    HOME = '/home/ubuntu/Spark/mongo/'
+    BASE_DATASET = '/mnt/volume/'
+
 REQUEST_SIZE = 100000
 
 import time
@@ -278,8 +286,8 @@ if __name__ == '__main__':
 
     datasets = dict()
 
-    p = '/mnt/volume/dataset/'
-    sav = '/mnt/volume/dataset_save/'
+    p = BASE_DATASET + 'dataset/'
+    sav = BASE_DATASET + 'dataset_save/'
 
     for file_name in glob.glob(p + '*'):
         name = file_name.split('/')[-1]

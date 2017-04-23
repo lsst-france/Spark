@@ -13,8 +13,8 @@ from pymongo.errors import BulkWriteError
 import stepper as st
 
 GALACTICA = False
-WINDOWS = True
-LAL = False
+WINDOWS = False
+LAL = True
 
 if GALACTICA:
     MONGO_URL = r'mongodb://192.168.56.233:27117'
@@ -26,6 +26,22 @@ elif LAL:
 VIEW = {'_id': 0, 'ra': 1, 'decl': 1, 'loc': 1}
 
 print(pymongo.version)
+
+def test9(dataset):
+    stepper = st.Stepper()
+
+    try:
+        min_ra = dataset.find( {}, {'_id':0, 'loc':1}).sort( 'loc.0', 1 ).limit(1)[0]['loc'][0]
+        max_ra = dataset.find( {}, {'_id':0, 'loc':1}).sort( 'loc.0', -1 ).limit(1)[0]['loc'][0]
+        min_decl = dataset.find( {}, {'_id':0, 'loc':1}).sort( 'loc.1', 1 ).limit(1)[0]['loc'][1]
+        max_decl = dataset.find( {}, {'_id':0, 'loc':1}).sort( 'loc.1', -1 ).limit(1)[0]['loc'][1]
+    except pymongo.errors.PyMongoError as e:
+        print('error min, max', e)
+
+    print('ra= [', min_ra, ',', max_ra, ']')
+    print('decl= [', min_decl, ',', max_decl, ']')
+
+    stepper.show_step('select min(ra), max(ra), min(decl), max(decl) from Object;')
 
 if __name__ == '__main__':
     client = pymongo.MongoClient(MONGO_URL)
@@ -68,10 +84,26 @@ if __name__ == '__main__':
 
     stepper = st.Stepper()
     try:
+        lsst.y.create_index([('loc.0', pymongo.ASCENDING)])
+    except pymongo.errors.PyMongoError as e:
+        print('error create index on ra', e)
+    stepper.show_step('index creation')
+
+    stepper = st.Stepper()
+    try:
+        lsst.y.create_index([('loc.1', pymongo.ASCENDING)])
+    except pymongo.errors.PyMongoError as e:
+        print('error create index on decl', e)
+    stepper.show_step('index creation')
+
+    stepper = st.Stepper()
+    try:
         lsst.y.create_index([('loc', pymongo.GEO2D)])
     except pymongo.errors.PyMongoError as e:
         print('error create_geo_index', e)
     stepper.show_step('index creation')
+
+    test9(lsst.y)
 
     dra =    { '$abs': {'$subtract': [ {'$arrayElemAt': ['$ns.loc', 0]}, {'$arrayElemAt': ['$loc', 0]}] } }
     dra2 =   { '$multiply': [dra, dra] }
@@ -90,6 +122,7 @@ if __name__ == '__main__':
 
 
     stepper = st.Stepper()
+
     result = lsst.y.aggregate( [
         {'$geoNear': {
             'near': [0, 0],
