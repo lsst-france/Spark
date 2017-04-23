@@ -224,17 +224,20 @@ if __name__ == '__main__':
         elif arg == "7":
             test7(lsst.Object)
         elif arg == "8":
-            test8(lsst.Object)
+            # test8(lsst.Object)
+            pass
         elif arg == "9":
             test9(lsst.Object)
         elif arg == "10":
-            test10(lsst.Source)
+            # test10(lsst.Source)
+            pass
         elif arg == "11":
             test11(lsst.Source)
         elif arg == "12":
             test12(lsst.Source)
         elif arg == "13":
-            test13(lsst.ForcedSource)
+            # test13(lsst.ForcedSource)
+            pass
         elif arg == "14":
             test14(lsst.ForcedSource)
 
