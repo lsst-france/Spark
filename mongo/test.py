@@ -178,7 +178,7 @@ def test14(dataset):
     stepper = st.Stepper()
 
     try:
-        filter = { 'psfFlux': { '$and': [{ '$gt': 0.1 }, {{ '$lt': 0.2 }}] } }
+        filter = { '$and': [ { 'psfFlux': { '$gt': 0.1 } }, { 'psfFlux': { '$lt': 0.2 } } ] }
         result = dataset.count( filter )
         print(result)
     except pymongo.errors.PyMongoError as e:
