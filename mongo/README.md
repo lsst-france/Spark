@@ -115,11 +115,86 @@ decl in [ -89.9980998531713 , 45.5294089939541 ]
 144843
 ---- select count(*) from Source where flux_sinc between 2 and 3; 0.076 seconds
 146420
----- create index on flux_sinc 76995.661 seconds
+---- create index on psfFlux
 ---- select count(*) from ForcedSource where psfFlux between 0.1 and 0.2; 1.463 seconds
 2810383
 `````
 
+Statistiques sur les bases:
+---------------------------
+
+````
+> db.Object.stats()
+{
+        "ns" : "lsst.Object",
+        "size" : 341654600698,
+        "count" : 79226537,
+        "avgObjSize" : 4312,
+        "storageSize" : 108171677696,
+        "nindexes" : 7,
+        "totalIndexSize" : 5775544320,
+        "indexSizes" : {
+                "_id_" : 731181056,
+                "deepSourceId_-1" : 850108416,
+                "chunkId_1" : 242065408,
+                "loc_2d" : 1005944832,
+                "y_instFlux_1" : 687816704,
+                "ra_1" : 1107623936,
+                "decl_1" : 1150803968
+        },
+}
+
+> db.Source.stats()
+{
+        "ns" : "lsst.Source",
+        "size" : NumberLong("2646853545125"),
+        "count" : 1426096034,
+        "avgObjSize" : 1856,
+        "storageSize" : 1005127626752,
+        "nindexes" : 3,
+        "totalIndexSize" : 44407873536,
+        "indexSizes" : {
+                "_id_" : 14317051904,
+                "id_-1" : 16799580160,
+                "flux_sinc_1" : 13291241472
+        },
+}
+
+> db.ObjectFullOverlap.stats()
+{
+        "ns" : "lsst.ObjectFullOverlap",
+        "size" : 138563836955,
+        "count" : 32367384,
+        "avgObjSize" : 4280,
+        "storageSize" : 43399512064,
+        "nindexes" : 4,
+        "totalIndexSize" : 1223684096,
+        "indexSizes" : {
+                "_id_" : 294113280,
+                "subChunkId_-1_deepSourceId_-1" : 407576576,
+                "deepSourceId_-1_subChunkId_-1" : 422391808,
+                "chunkId_1" : 99602432
+        },
+}
+
+> db.ForcedSource.stats()
+{
+        "ns" : "lsst.ForcedSource",
+        "size" : NumberLong("2063898963674"),
+        "count" : 7151796541,
+        "avgObjSize" : 288,
+        "storageSize" : 609280475136,
+        "nindexes" : 4,
+        "totalIndexSize" : 266355220480,
+        "indexSizes" : {
+                "_id_" : 72217485312,
+                "deepSourceId_-1_scienceCcdExposureId_-1" : 117787766784,
+                "chundId_1" : 22113026048,
+                "psfFlux_1" : 54236942336
+        },
+}
+
+````
 
 Auteur
 ------
