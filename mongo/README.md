@@ -4,14 +4,14 @@ Comparing the NoSQL/MongoDb database vs. the QServ tool.
 Goal of the project
 -------------------
 
-Several functional characteristics of the QServ system seem to be applied
-using the MongoDb tool, Among which we quote:
-- Ability to distribute both the databse and the server through the Sharding mechanism.
+Several functional characteristics of the QServ system seem to be obtained
+using the MongoDb tool, Among which we may quote:
+- Ability to distribute both the database and the server through the Sharding mechanism.
 - Indexing against 2D coordinates of the objects
-- Indexing against a sky splitting in chunds (so as to drive the sharding)
+- Indexing against a sky splitting in chunks (so as to drive the sharding)
 
 Thus, the project goal will be to evaluate if:
-- the MongoDb database offers natively comparable or equivalent functionalities
+- the MongoDb database offers natively comparable or equivalent functionality
 - the performances are comparable.
 
 Plateform setup 
@@ -47,8 +47,8 @@ a set of catalogs:
 -	ObjectFullOverlap (32367384 documents)
 
 Any of these catalog is already prepared to concern one sky region
-(*identified by a chunkId*). Therefore, 324 sky regions are avaiable for any 
-of the 4 catalog type.
+(*identified by a chunkId*). Therefore, 324 sky regions are available for any 
+of the 4 catalog types.
 
 Preparation operations
 ----------------------
@@ -121,8 +121,8 @@ decl in [ -89.9980998531713 , 45.5294089939541 ]
 2810383
 `````
 
-The pmechanism for JOINS associated with 2D queries
----------------------------------------------------
+The mechanism for the Joins associated with 2D queries
+------------------------------------------------------
 
 We currently study the specific mechanisms available in Mongo to associate
 the 2D indexing with the Joins.
@@ -130,10 +130,10 @@ This is based on the "aggregate" construct which handles a "pipeline" of
 chained individual operations.
 
 The studied sequence is:
-1. select a sky region around a reference point
-1. build a self-join so as to obtain a table of object couples
-1. compute the distance between objects in every couple objects
-1. select all computed distance lower than a maximum value.
+1. selecting a sky region around a reference point
+1. building a self-join so as to obtain a table of object couples
+1. computing the distance between objects in every couple
+1. selecting all computed distances lower than a maximum value.
 
 ````
     dra =    { '$abs': {'$subtract': [ {'$arrayElemAt': ['$ns.loc', 0]}, {'$arrayElemAt': ['$loc', 0]}] } }
@@ -168,7 +168,6 @@ The studied sequence is:
     ] )
 
 ````
-
 
 Statistics in the current base:
 -------------------------------
