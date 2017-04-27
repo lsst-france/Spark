@@ -12,20 +12,25 @@ import argparse
 import random
 import stepper as st
 
-spark = SparkSession\
-       .builder\
-       .appName("test")\
-       .config("spark.cores.max", "10")\
-       .getOrCreate()
-
-sc = spark.sparkContext
+cores = 10
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-c', '--create', action="store_true")
 parser.add_argument('-r', '--records', type=int, default=1000)
 parser.add_argument('-b', '--block', type=int, default=1000)
 parser.add_argument('-s', '--steps', type=int, default=10)
+parser.add_argument('-k', '--cores', type=int, default=10)
 args = parser.parse_args()
+
+cores = args.cores
+
+spark = SparkSession\
+       .builder\
+       .appName("test")\
+       .config("spark.cores.max", "{}".format(cores))\
+       .getOrCreate()
+
+sc = spark.sparkContext
 
 create = args.create
 
