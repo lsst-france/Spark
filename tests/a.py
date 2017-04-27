@@ -10,6 +10,7 @@ import numpy as np
 from pyspark.sql.types import *
 import argparse
 import random
+import stepper as st
 
 spark = SparkSession\
        .builder\
@@ -38,9 +39,13 @@ schema = StructType([StructField("run", IntegerType(), True),
 
 if create:
     print('creating data with', records, 'records made of blocks of', block, 'doubles')
+    stepper = st.Stepper()
     rdd = sc.parallelize(range(runs*records), 30).map(lambda x: (int(random.random()*runs), np.random.rand(block).tolist()))
+    stepper.show_step('create data')
     df = spark.createDataFrame(rdd, schema)
+    stepper.show_step('create dataframe')
     df.write.mode("overwrite").save("./images")
+    stepper.show_step('write data')
 else:
     print('reading data and applying', steps, 'steps to them')
     df = spark.read.load("./images")
