@@ -10,21 +10,27 @@ import numpy as np
 from pyspark.sql.types import *
 import argparse
 import random
+import stepper as st
 
-spark = SparkSession\
-       .builder\
-       .appName("test")\
-       .config("spark.cores.max", "10")\
-       .getOrCreate()
-
-sc = spark.sparkContext
+cores = 10
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-c', '--create', action="store_true")
 parser.add_argument('-r', '--records', type=int, default=1000)
 parser.add_argument('-b', '--block', type=int, default=1000)
 parser.add_argument('-s', '--steps', type=int, default=10)
+parser.add_argument('-k', '--cores', type=int, default=10)
 args = parser.parse_args()
+
+cores = args.cores
+
+spark = SparkSession\
+       .builder\
+       .appName("test")\
+       .config("spark.cores.max", "{}".format(cores))\
+       .getOrCreate()
+
+sc = spark.sparkContext
 
 create = args.create
 
@@ -38,9 +44,13 @@ schema = StructType([StructField("run", IntegerType(), True),
 
 if create:
     print('creating data with', records, 'records made of blocks of', block, 'doubles')
+    stepper = st.Stepper()
     rdd = sc.parallelize(range(runs*records), 30).map(lambda x: (int(random.random()*runs), np.random.rand(block).tolist()))
+    stepper.show_step('create data')
     df = spark.createDataFrame(rdd, schema)
+    stepper.show_step('create dataframe')
     df.write.mode("overwrite").save("./images")
+    stepper.show_step('write data')
 else:
     print('reading data and applying', steps, 'steps to them')
     df = spark.read.load("./images")

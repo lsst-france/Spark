@@ -15,6 +15,7 @@ import stepper as st
 GALACTICA = True
 WINDOWS = False
 LAL = False
+ATLAS = False
 
 if GALACTICA:
     MONGO_URL = r'mongodb://192.168.56.233:27117'
@@ -22,6 +23,8 @@ elif WINDOWS:
     MONGO_URL = r'mongodb://localhost:27017'
 elif LAL:
     MONGO_URL = r'mongodb://134.158.75.222:27017'
+elif ATLAS:
+    MONGO_URL = r'mongodb://arnault:arnault7977$@cluster0-shard-00-00-wd0pq.mongodb.net:27017,cluster0-shard-00-01-wd0pq.mongodb.net:27017,cluster0-shard-00-02-wd0pq.mongodb.net:27017/<DATABASE>?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin'
 
 VIEW = {'_id': 0, 'ra': 1, 'decl': 1, 'loc': 1}
 
