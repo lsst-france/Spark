@@ -192,6 +192,49 @@ def test14(dataset):
 
     stepper.show_step('select count(*) from ForcedSource where psfFlux between 0.1 and 0.2;')
 
+def test15(dataset):
+    dra =    { '$abs': {'$subtract': [ {'$arrayElemAt': ['$ns.loc', 0]}, {'$arrayElemAt': ['$loc', 0]}] } }
+    dra2 =   { '$multiply': [dra, dra] }
+
+    ddecl =  { '$abs': {'$subtract': [ {'$arrayElemAt': ['$ns.loc', 1]}, {'$arrayElemAt': ['$loc', 1]}] } }
+    ddecl2 = { '$multiply': [ddecl, ddecl] }
+
+    dist =   { '$sqrt':  { '$add': [ dra2, ddecl2] } }
+
+
+    ra = 0.
+    decl = 0.
+    ext = 10.
+    bottomleft = [ ra - ext, decl - ext ]
+    topright = [ ra + ext, decl + ext ]
+
+
+    stepper = st.Stepper()
+
+    result = dataset.aggregate( [
+        {'$geoNear': {
+            'near': [0, 0],
+            'query': { 'loc': { '$geoWithin': {'$box': [bottomleft, topright] }  } },
+            'distanceField': 'dist',
+        } },
+        {'$lookup': {'from':'y', 'localField':'y.loc', 'foreignField':'y.loc', 'as':'ns'} },
+        {'$unwind': '$ns'},
+        # {'$addFields': {'dra':dra, 'dra2': dra2, 'ddecl':ddecl, 'ddecl2': ddecl2, 'dist': dist} },
+        {'$addFields': {'dist': dist} },
+        {'$match': { '$and': [ { 'dist': { '$gt': 0 } }, { 'dist': { '$lt': 1 } } ] } },
+        # {'$project': {'_id': 0, 'loc':1, 'ns.loc':1, 'dra': 1, 'ddecl': 1, 'dist': 1}},
+        {'$project': {'_id': 0, 'loc':1, 'ns.loc':1, 'dist': 1}},
+        # {'$sort': {'dist': 1 } }
+        # {'$limit':10},
+        # {'$count': 'objects'},
+    ] )
+    stepper.show_step('aggregate')
+
+    # print(result)
+
+    for i, o in enumerate(result):
+        print(i, o)
+
 
 
 if __name__ == '__main__':

@@ -12,9 +12,9 @@ from pymongo.errors import BulkWriteError
 
 import stepper as st
 
-GALACTICA = False
+GALACTICA = True
 WINDOWS = False
-LAL = True
+LAL = False
 
 if GALACTICA:
     MONGO_URL = r'mongodb://192.168.56.233:27117'
@@ -60,7 +60,7 @@ if __name__ == '__main__':
 
     stepper = st.Stepper()
     requests = []
-    for i in range(100000):
+    for i in range(1000):
         obj = {'loc': [ (random.random()*2*window - window), (random.random()*2*window - window) ] }
         # lsst.y.insert( obj )
         requests.append(pymongo.InsertOne(obj))
@@ -121,14 +121,14 @@ if __name__ == '__main__':
     topright = [ ra + ext, decl + ext ]
 
 
-    stepper = st.Stepper()
-
-    result = lsst.y.aggregate( [
-        {'$geoNear': {
-            'near': [0, 0],
-            'query': { 'loc': { '$geoWithin': {'$box': [bottomleft, topright] }  } },
-            'distanceField': 'dist',
-        } },
+    p = [
+        {'$geoNear': 
+            {
+                'near': [0, 0],
+                'query': { 'loc': { '$geoWithin': {'$box': [bottomleft, topright] }  } },
+                'distanceField': 'dist',
+            } 
+        },
         {'$lookup': {'from':'y', 'localField':'y.loc', 'foreignField':'y.loc', 'as':'ns'} },
         {'$unwind': '$ns'},
         # {'$addFields': {'dra':dra, 'dra2': dra2, 'ddecl':ddecl, 'ddecl2': ddecl2, 'dist': dist} },
@@ -139,7 +139,13 @@ if __name__ == '__main__':
         # {'$sort': {'dist': 1 } }
         # {'$limit':10},
         # {'$count': 'objects'},
-    ] )
+    ]
+
+    stepper = st.Stepper()
+
+    # result = lsst.y.aggregate(p, allowDiskUse=True)
+    result = lsst.command('aggregate', 'y', p)
+
     stepper.show_step('aggregate')
 
     # print(result)
