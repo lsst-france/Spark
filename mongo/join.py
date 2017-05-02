@@ -63,7 +63,7 @@ if __name__ == '__main__':
 
     stepper = st.Stepper()
     requests = []
-    for i in range(1000):
+    for i in range(1000000):
         obj = {'loc': [ (random.random()*2*window - window), (random.random()*2*window - window) ] }
         # lsst.y.insert( obj )
         requests.append(pymongo.InsertOne(obj))
@@ -105,6 +105,8 @@ if __name__ == '__main__':
     except pymongo.errors.PyMongoError as e:
         print('error create_geo_index', e)
     stepper.show_step('index creation')
+
+    exit()
 
     test9(lsst.y)
 
