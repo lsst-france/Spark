@@ -126,7 +126,7 @@ if __name__ == '__main__':
     topright = [ ra + ext, decl + ext ]
 
 
-    p = [
+    p1 = [
         {'$geoNear': 
             {
                 'near': [0, 0],
@@ -134,7 +134,11 @@ if __name__ == '__main__':
                 'distanceField': 'dist',
             } 
         },
-        {'$lookup': {'from':'y', 'localField':'y.loc', 'foreignField':'y.loc', 'as':'ns'} },
+        {'$out': 'z'},
+    ]
+
+    p2 = [
+        {'$lookup': {'from':'z', 'localField':'y.loc', 'foreignField':'z.loc', 'as':'ns'} },
         {'$unwind': '$ns'},
         # {'$addFields': {'dra':dra, 'dra2': dra2, 'ddecl':ddecl, 'ddecl2': ddecl2, 'dist': dist} },
         {'$addFields': {'dist': dist} },
@@ -149,7 +153,7 @@ if __name__ == '__main__':
     stepper = st.Stepper()
 
     # result = lsst.y.aggregate(p, allowDiskUse=True)
-    result = lsst.command('aggregate', 'y', p)
+    result = lsst.command('aggregate', 'y', p1)
 
     stepper.show_step('aggregate')
 
