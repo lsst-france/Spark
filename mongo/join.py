@@ -63,7 +63,7 @@ if __name__ == '__main__':
 
     stepper = st.Stepper()
     requests = []
-    for i in range(1000000):
+    for i in range(10000):
         obj = {'loc': [ (random.random()*2*window - window), (random.random()*2*window - window) ] }
         # lsst.y.insert( obj )
         requests.append(pymongo.InsertOne(obj))
