@@ -45,7 +45,7 @@ schema = StructType([StructField("run", IntegerType(), True),
 if create:
     print('creating data with', records, 'records made of blocks of', block, 'doubles')
     stepper = st.Stepper()
-    rdd = sc.parallelize(range(runs*records), 30).map(lambda x: (int(random.random()*runs), np.random.rand(block).tolist()))
+    rdd = sc.parallelize(range(runs*records), 100).map(lambda x: (int(random.random()*runs), np.random.rand(block).tolist()))
     stepper.show_step('create data')
     df = spark.createDataFrame(rdd, schema)
     stepper.show_step('create dataframe')

@@ -18,8 +18,6 @@ class Stepper(object):
 
         self.previous_time = now
 
-        return delta
-
 
 if __name__ == '__main__':
     pass
