@@ -15,10 +15,19 @@ from pymongo.errors import BulkWriteError
 
 import stepper as st
 
-GALACTICA = False
-WINDOWS = False
-LAL = True
-ATLAS = False
+import socket
+print(socket.gethostname())
+
+HOST = socket.gethostname()
+
+if HOST == 'mongoserver-1':
+    GALACTICA = True
+elif HOST == 'vm-75222.lal.in2p3.fr':
+    LAL = True	
+elif HOST == 'nb-arnault3':
+    WINDOWS = True
+else:
+    ATLAS = True
 
 if GALACTICA:
     MONGO_URL = r'mongodb://192.168.56.233:27117'
@@ -152,6 +161,9 @@ def do_join(lsst, nobjects, bottomleft, topright, max_dist):
 
     dist =   { '$sqrt':  { '$add': [ dra2, ddecl2] } }
 
+    """
+quand on rencontre [$_id1, $ns._id2] est-ce qu'il existe le couple [$_id2, $ns._id1] ?
+    """
 
     p2 = [
         {'$geoNear':
@@ -164,7 +176,8 @@ def do_join(lsst, nobjects, bottomleft, topright, max_dist):
         },
         {'$lookup': {'from':'z', 'localField':'y.loc', 'foreignField':'z.loc', 'as':'ns'} },
         {'$unwind': '$ns'},
-        {'$match': {'y._id': {'$ne': 'ns._id'}}},
+        {'$redact': { '$cond': [{ '$eq': ["$_id", "$ns._id"] }, "$$PRUNE", "$$KEEP" ] } },
+        # {'$redact': { '$cond': [{ '$eq': ["$_id", "$ns._id"] }, "$$PRUNE", "$$KEEP" ] } },
         {'$addFields': {'dist': dist} },
         # {'$match': { '$and': [ { 'dist': { '$gt': 0 } }, { 'dist': { '$lt': max_dist } } ] } },
         # {'$project': {'_id': 1, 'loc':1, 'ns.loc':1, 'dist': 1}},
