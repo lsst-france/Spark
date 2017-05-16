@@ -13,11 +13,9 @@ from pymongo.errors import BulkWriteError
 
 import stepper as st
 
-MONGO_URL = r'mongodb://192.168.56.233:27117'
+import configure_mongo
+
 VIEW = {'_id': 0, 'ra': 1, 'decl': 1, 'loc': 1}
-
-print(pymongo.version)
-
 
 def test1(dataset):
     stepper = st.Stepper()
@@ -244,7 +242,7 @@ if __name__ == '__main__':
         print('give the test numbers')
         exit()
 
-    client = pymongo.MongoClient(MONGO_URL)
+    client = pymongo.MongoClient(configure_mongo.MONGO_URL)
     lsst = client.lsst
 
     for i, arg in enumerate(sys.argv):

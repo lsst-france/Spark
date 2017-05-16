@@ -9,18 +9,7 @@ import decimal
 import re
 from pymongo.errors import BulkWriteError
 
-LAL = True
-
-MONGO_URL = r'mongodb://127.0.0.1:27017'
-
-if LAL:
-    MONGO_URL = r'mongodb://134.158.75.222:27017'
-    HOME = '/home/christian.arnault/LSSTSpark/mongo/'
-    BASE_DATASET = '/home/christian.arnault/'
-else:
-    MONGO_URL = r'mongodb://192.168.56.233:27117'
-    HOME = '/home/ubuntu/Spark/mongo/'
-    BASE_DATASET = '/mnt/volume/'
+import configure_mongo
 
 REQUEST_SIZE = 100000
 
@@ -69,7 +58,7 @@ def read_schema():
     keys = dict()
     primaries = None
 
-    with open(HOME + 'schema.sql', 'rb') as f:
+    with open(configure_mongo.HOME + 'schema.sql', 'rb') as f:
         in_schema = False
 
         for line in f:
@@ -244,7 +233,7 @@ def read_data(file_name):
 
 if __name__ == '__main__':
     bench = None
-    client = pymongo.MongoClient(MONGO_URL)
+    client = pymongo.MongoClient(configure_mongo.MONGO_URL)
     lsst = client.lsst
 
     read_schema()
@@ -286,8 +275,8 @@ if __name__ == '__main__':
 
     datasets = dict()
 
-    p = BASE_DATASET + 'dataset/'
-    sav = BASE_DATASET + 'dataset_save/'
+    p = configure_mongo.BASE_DATASET + 'dataset/'
+    sav = configure_mongo.BASE_DATASET + 'dataset_save/'
 
     for file_name in glob.glob(p + '*'):
         name = file_name.split('/')[-1]

@@ -15,33 +15,7 @@ from pymongo.errors import BulkWriteError
 
 import stepper as st
 
-import socket
-print(socket.gethostname())
-
-HOST = socket.gethostname()
-
-if HOST == 'mongoserver-1':
-    GALACTICA = True
-elif HOST == 'vm-75222.lal.in2p3.fr':
-    LAL = True
-elif HOST == 'nb-arnault3':
-    WINDOWS = True
-else:
-    ATLAS = True
-
-GALACTICA = True
-
-if GALACTICA:
-    # MONGO_URL = r'mongodb://192.168.56.233:27117'
-    MONGO_URL = r'mongodb://193.55.95.149:27117'
-elif WINDOWS:
-    MONGO_URL = r'mongodb://localhost:27017'
-elif LAL:
-    MONGO_URL = r'mongodb://134.158.75.222:27017'
-elif ATLAS:
-    MONGO_URL = r'mongodb://arnault:arnault7977$@cluster0-shard-00-00-wd0pq.mongodb.net:27017,cluster0-shard-00-01-wd0pq.mongodb.net:27017,cluster0-shard-00-02-wd0pq.mongodb.net:27017/<DATABASE>?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin'
-
-print(pymongo.version)
+import configure_mongo
 
 """
 SELECT ra, decl, raVar, declVar, radeclCov, u_psfFlux, u_psfFluxSigma, u_apFlux FROM Object WHERE deepSourceId = 2322920177140010;
@@ -59,16 +33,30 @@ def do_create(lsst, keys):
 
 
 if __name__ == '__main__':
-    client = pymongo.MongoClient(MONGO_URL)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-f', '--fields', default="")
+
+    args = parser.parse_args()
+
+    if args.fields == "":
+        print('no fields')
+        exit()
+
+    print('fields', args.fields)
+
+    client = pymongo.MongoClient(configure_mongo.MONGO_URL)
     lsst = client.lsst
     dataset = lsst.Object
 
     count = dataset.count()
     print('Objects', count)
 
+    # fields = ['ra', 'decl', 'raVar', 'declVar', 'radeclCov', 'u_psfFlux', 'u_psfFluxSigma', 'u_apFlux']
+    fields = ['deepSourceId']
 
     # result = dataset.find({}, {'ra': 1, 'declVar':1})
-    result = dataset.find({}, {'ra':1, 'decl':1, 'raVar':1, 'declVar':1, 'radeclCov':1, 'u_psfFlux':1, 'u_psfFluxSigma':1, 'u_apFlux':1})
+    view = {k: 1 for k in fields}
+    result = dataset.find({}, view)
 
     for o in result:
         keys = o.keys()

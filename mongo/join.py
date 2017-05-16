@@ -15,32 +15,9 @@ from pymongo.errors import BulkWriteError
 
 import stepper as st
 
-import socket
-print(socket.gethostname())
-
-HOST = socket.gethostname()
-
-if HOST == 'mongoserver-1':
-    GALACTICA = True
-elif HOST == 'vm-75222.lal.in2p3.fr':
-    LAL = True	
-elif HOST == 'nb-arnault3':
-    WINDOWS = True
-else:
-    ATLAS = True
-
-if GALACTICA:
-    MONGO_URL = r'mongodb://192.168.56.233:27117'
-elif WINDOWS:
-    MONGO_URL = r'mongodb://localhost:27017'
-elif LAL:
-    MONGO_URL = r'mongodb://134.158.75.222:27017'
-elif ATLAS:
-    MONGO_URL = r'mongodb://arnault:arnault7977$@cluster0-shard-00-00-wd0pq.mongodb.net:27017,cluster0-shard-00-01-wd0pq.mongodb.net:27017,cluster0-shard-00-02-wd0pq.mongodb.net:27017/<DATABASE>?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin'
+import configure_mongo
 
 VIEW = {'_id': 0, 'ra': 1, 'decl': 1, 'loc': 1}
-
-print(pymongo.version)
 
 def test9(dataset):
     stepper = st.Stepper()
@@ -212,7 +189,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    client = pymongo.MongoClient(MONGO_URL)
+    client = pymongo.MongoClient(configure_mongo.MONGO_URL)
     lsst = client.lsst
 
     create = args.create

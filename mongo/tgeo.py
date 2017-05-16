@@ -8,8 +8,7 @@ import decimal
 from pymongo.errors import BulkWriteError
 import stepper as st
 
-# MONGO_URL = r'mongodb://134.158.75.222:27017'
-MONGO_URL = r'mongodb://192.168.56.233:27117'
+import configure_mongo
 
 VIEW = {'_id':0, 'ra': 1, 'decl': 1, 'loc': 1}
 
@@ -137,7 +136,7 @@ def prepare_Object(lsst):
 if __name__ == '__main__':
 
     geo = None
-    client = pymongo.MongoClient(MONGO_URL)
+    client = pymongo.MongoClient(configure_mongo.MONGO_URL)
     lsst = client.lsst
 
     # try_geo(lsst, 1000)

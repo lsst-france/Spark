@@ -7,8 +7,7 @@ import bson
 import decimal
 from pymongo.errors import BulkWriteError
 
-MONGO_URL = r'mongodb://127.0.0.1:27017'
-# MONGO_URL = r'mongodb://134.158.75.222:27017'
+import configure_mongo
 
 import time
 
@@ -115,7 +114,7 @@ def creation(bench):
 if __name__ == '__main__':
 
     bench = None
-    client = pymongo.MongoClient(MONGO_URL)
+    client = pymongo.MongoClient(configure_mongo.MONGO_URL)
     lsst = client.lsst
 
     recreate = False
