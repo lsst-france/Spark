@@ -51,8 +51,7 @@ if __name__ == '__main__':
     count = dataset.count()
     print('Objects', count)
 
-    # fields = ['ra', 'decl', 'raVar', 'declVar', 'radeclCov', 'u_psfFlux', 'u_psfFluxSigma', 'u_apFlux']
-    fields = ['deepSourceId']
+    fields = args.fields
 
     # result = dataset.find({}, {'ra': 1, 'declVar':1})
     view = {k: 1 for k in fields}
