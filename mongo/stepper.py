@@ -14,7 +14,20 @@ class Stepper(object):
         now = time.time()
         delta = now - self.previous_time
 
-        print('--------------------------------', label, '{:.3f} seconds'.format(delta))
+        if delta < 60:
+            t = '0h0m{:.3f}s'.format(delta)
+        elif delta < 3600:
+            m = int(delta / 60)
+            s = delta - (m*60)
+            t = '0h{}m{:.3f}s'.format(m, s)
+        else:
+            h = int(delta / 3600)
+            d = delta - (h*3600)
+            m = int(d / 60)
+            s = d - (m*60)
+            t = '{}h{}h{:.3f}s'.format(h, m, s)
+
+        print('--------------------------------', label, t)
 
         self.previous_time = now
 
