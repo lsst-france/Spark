@@ -8,6 +8,8 @@ if configure_mongo.LAL:
     from pyspark.sql.types import *
     from pyspark import SparkConf, SparkContext
 
+
+
 import numpy as np
 
 import catalog
@@ -57,6 +59,30 @@ if __name__ == '__main__':
     for k in catalog.Schemas:
         print(k)
 
+        schema = catalog.Schemas[k]
+
+        struct_fields = []
+        for f in schema.fields:
+            field_type = schema.fields[f]
+            print(f, field_type)
+
+            t = None
+            if field_type == 'bit(1)':
+                t = BooleanType()
+            elif field_type == 'int(11)':
+                t = IntegerType()
+            elif field_type == 'bigint(20)':
+                t = LongType()
+            elif field_type == 'double':
+                t = DoubleType()
+            elif field_type == 'float':
+                t = FloatType()
+            else:
+                t = StringType()
+
+            struct_fields.append(StructField(f, t, True))
+
+"""
         # define the region schema
         image_schema = StructType([StructField("id", IntegerType(), True),
                                    StructField("r", IntegerType(), True),
@@ -71,9 +97,6 @@ if __name__ == '__main__':
             # save regions
             df.write.format("com.databricks.spark.avro").mode("overwrite").save("./images")
 
-"""
-create_images(spark)
-read_images(spark)
 """
 
 
