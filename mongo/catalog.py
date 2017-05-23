@@ -1,19 +1,34 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+Module to parse and analyze the schema.sql file describing the LSST dataset
+This produces a dict of the 4 schemas
+
+Object
+Source
+ObjectFullOverlap
+ForcedSource
+
+"""
+
 import configure_mongo
 import re
 
 class Schema(object):
     def __init__(self, name):
         self.name = name
-        self.fields = dict()
+        self.fields = []
+        self.structure = None
         self.collection = None
         self.primary = None
 
     def add_field(self, name, ftype):
         # print('add field', name, ftype)
-        self.fields[name] = ftype
+        self.fields.append((name, ftype))
+
+    def set_structure(self, struct_schema):
+        self.structure = struct_schema
 
     def set_collection(self, col):
         self.collection = col

@@ -1,6 +1,9 @@
-.idea/*
+.idea
 data/image*.p
-src/__pycache__
 
-tests/derby.log
-tests/metastore_db/*
+__pycache__
+
+derby.log
+metastore_db
+
+
