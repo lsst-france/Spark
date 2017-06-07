@@ -45,7 +45,13 @@ object SimpleApp {
 
       time("select ra, decl", df.select("ra", "decl").show())
 
-      val count = time("filter", df.select("ra", "decl", "chunkId").sort("ra").filter(($"ra" > 190.3) && ($"ra" < 190.7)).count())
-      println("count " + count)
+      val df2 = time("sort", df.select("ra", "decl", "chunkId").sort("ra"))
+
+      val seq = time("collect", df2.rdd.take(10))
+      println(seq)
+
+      // val count = time("filter", df2.filter(($"ra" > 190.3) && ($"ra" < 190.7)).count())
+
+      // println("count " + count)
   }
 }
