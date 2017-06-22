@@ -6,6 +6,7 @@
 //import org.apache.spark.SparkContext
 
 import scala.collection.Searching._
+import Array._
 
 object SimpleApp {
 
@@ -24,9 +25,16 @@ object SimpleApp {
     println("slice: " + slice)
   }
 
-  def main(args: Array[String]) {
-      a(1000000)
+  def b()
+  {
+    // var cube = ofDim[Double](3, 3, 3)
+    var cube = scala.collection.parallel.mutable.ParArray.tabulate(3, 3, 3)((_, _, _) => scala.util.Random.nextDouble())
+    cube.foreach{_.foreach{_.foreach{println}}}
+  }
 
+  def main(args: Array[String]) {
+      // a(1000000)
+      b()
 
   }
 }

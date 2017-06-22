@@ -24,10 +24,15 @@ args = parser.parse_args()
 
 cores = args.cores
 
+print("cores = ", cores)
+
 spark = SparkSession\
        .builder\
        .appName("test")\
        .config("spark.cores.max", "{}".format(cores))\
+       .config("spark.local.dir=/mongo/log/tmp/")\
+       .config("spark.executor.memory=20g")\
+       .config("spark.storage.memoryFraction=0")\
        .getOrCreate()
 
 sc = spark.sparkContext
@@ -49,20 +54,40 @@ if create:
     stepper.show_step('create data')
     df = spark.createDataFrame(rdd, schema)
     stepper.show_step('create dataframe')
+    # input("ok")
     df.write.mode("overwrite").save("./images")
     stepper.show_step('write data')
 else:
+    stepper = st.Stepper()
     print('reading data and applying', steps, 'steps to them')
     df = spark.read.load("./images")
+    stepper.show_step('read data')
+
     df = df.filter(df.run == 3)
+    stepper.show_step('filter')
+
     exp = functions.udf(lambda m: np.exp(np.array(m)).tolist(), ArrayType(DoubleType(), True))
     log = functions.udf(lambda m: np.log(np.array(m)).tolist(), ArrayType(DoubleType(), True))
-    msum =  functions.udf(lambda m: float(np.sum(np.array(m))), DoubleType())
+    stepper.show_step('step0')
+
+    msum = functions.udf(lambda m: float(np.sum(np.array(m))), DoubleType())
+    size = functions.udf(lambda m: len(m), IntegerType())
 
     for step in range(steps):
         df = df.select(df.run, exp(df.image).alias('image'))
         df = df.select(df.run, log(df.image).alias('image'))
 
-    df = df.select(df.run, msum(df.image).alias('sum'))
-    df.show()
+    stepper.show_step('steps')
+
+    count = df.count()
+    print("count=", count)
+
+    df1 = df.select(df.run, msum(df.image).alias('sum'))
+    stepper.show_step('sum')
+    # df1.show()
+
+    df2 = df.select(df.run, size(df.image).alias('size'))
+    stepper.show_step('size')
+    df2.rdd.take(10)
+
 
