@@ -2,6 +2,17 @@
 # -*- coding: utf-8 -*-
 
 
+"""
+Program to convert the row oriented Mongo collections into collections containing arrays.
+
+Apparently this appears difficult !!!
+
+- one cannot aggregate une single array (10^8 elements)
+
+
+"""
+
+
 import os, glob
 import random
 import pymongo
@@ -10,6 +21,7 @@ import decimal
 import re
 import argparse
 from bson.objectid import ObjectId
+from urllib.parse import quote_plus
 
 from pymongo.errors import BulkWriteError
 
@@ -35,6 +47,8 @@ def do_create(lsst, keys):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--fields', default="")
+    parser.add_argument('-u', '--user', default="")
+    parser.add_argument('-p', '--password', default="")
 
     args = parser.parse_args()
 
@@ -44,12 +58,20 @@ if __name__ == '__main__':
 
     print('fields', args.fields)
 
-    client = pymongo.MongoClient(configure_mongo.MONGO_URL)
+    uri = configure_mongo.MONGO_URL
+    if args.password != "":
+        ip = re.sub('mongodb://', '', configure_mongo.MONGO_URL)
+        uri = "mongodb://%s:%s@%s" % ( quote_plus('lsst'), quote_plus(args.password), ip)
+        print(uri)
+
+    client = pymongo.MongoClient(uri)
     lsst = client.lsst
     dataset = lsst.Object
 
     count = dataset.count()
     print('Objects', count)
+
+    exit()
 
     fields = args.fields.split(',')
 

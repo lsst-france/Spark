@@ -29,6 +29,7 @@ if GALACTICA:
     BASE_DATASET = '/mnt/volume/'
 elif WINDOWS:
     MONGO_URL = r'mongodb://localhost:27017'
+    HOME = '/workspace/LSSTSpark/mongo/'
 elif LAL:
     MONGO_URL = r'mongodb://134.158.75.222:27017'
     HOME = '/home/christian.arnault/LSSTSpark/mongo/'
