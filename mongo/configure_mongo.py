@@ -31,7 +31,9 @@ elif WINDOWS:
     MONGO_URL = r'mongodb://localhost:27017'
     HOME = '/workspace/LSSTSpark/mongo/'
 elif LAL:
-    MONGO_URL = r'mongodb://134.158.75.222:27017'
+    from urllib.parse import quote_plus
+
+    MONGO_URL = r'mongodb://%s:%s@%s' % (quote_plus('lsst'), quote_plus('c.a@lal.200'), '134.158.75.222:27017/lsst')
     HOME = '/home/christian.arnault/LSSTSpark/mongo/'
     BASE_DATASET = '/home/christian.arnault/'
 elif ATLAS:
