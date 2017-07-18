@@ -47,10 +47,11 @@ steps = args.steps
 schema = StructType([StructField("run", IntegerType(), True),
                      StructField("image", ArrayType(DoubleType(), True))])
 
+partitions = 10000  # to have 256Mb files
 if create:
     print('creating data with', records, 'records made of blocks of', block, 'doubles')
     stepper = st.Stepper()
-    rdd = sc.parallelize(range(runs*records), 100).map(lambda x: (int(random.random()*runs), np.random.rand(block).tolist()))
+    rdd = sc.parallelize(range(runs*records), partitions).map(lambda x: (int(random.random()*runs), np.random.rand(block).tolist()))
     stepper.show_step('create data')
     df = spark.createDataFrame(rdd, schema)
     stepper.show_step('create dataframe')
@@ -83,8 +84,9 @@ else:
     print("count=", count)
 
     df1 = df.select(df.run, msum(df.image).alias('sum'))
+    total = df1.rdd.map(lambda x: float(x["sum"])).reduce(lambda x, y: x+y)
     stepper.show_step('sum')
-    # df1.show()
+    print('total=', total)
 
     df2 = df.select(df.run, size(df.image).alias('size'))
     stepper.show_step('size')
