@@ -6,7 +6,7 @@ import matplotlib.lines as lines
 
 defs = []
 
-with open('G:\\mongo\\j.txt', 'rb') as f:
+with open('G:\\mongo\\jobj.txt', 'rb') as f:
     for line in f:
         line = line.strip().decode('utf-8')
         line = line.strip('"')
@@ -37,9 +37,9 @@ if __name__ == '__main__':
         loc1 = d[3]
         loc2 = d[4]
 
-        if dist < 20:
-            x = (loc1[0], loc2[0])
-            y = (loc1[1], loc2[1])
-            plt.plot(x, y, marker='o')
+        # if dist < 20:
+        x = (loc1[0], loc2[0])
+        y = (loc1[1], loc2[1])
+        plt.plot(x, y, marker='o')
 
     plt.show()

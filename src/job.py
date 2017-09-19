@@ -25,6 +25,7 @@ if HAS_MONGODB:
 import pickle
 
 if HAS_MONGODB:
+    # mongo 134.158.75.222:27017/lsst --username='lsst' --password='c.a@lal.200'
     # MONGO_URL = r'mongodb://127.0.0.1:27017'
     MONGO_URL = r'mongodb://134.158.75.222:27017'
 
