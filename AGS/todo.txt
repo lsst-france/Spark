@@ -1,0 +1,31 @@
+mvn install:install-file -Dfile=/opt/spark-2.1.0-bin-hadoop2.6/jars/geospark-0.7.0.jar -DgroupId=org.datasyslab -DartifactId=geospark -Dversion=0.7.0 -Dpackaging=jar
+
+mvn -q -Dexec.executable='echo' -Dexec.args='${project.groupId} ${project.version} ${project.artifactId} ${project.packaging}' --non-recursive exec:exec
+
+
+
+java.lang.NoClassDefFoundError: org/datasyslab/sernetcdf/SerNetCDFUtils
+
+<!-- https://mvnrepository.com/artifact/org.datasyslab/sernetcdf -->
+<dependency>
+    <groupId>org.datasyslab</groupId>
+    <artifactId>sernetcdf</artifactId>
+    <version>0.1.0</version>
+</dependency>
+
+
+ucar.httpservices.HTTPException: ucar.httpservices.HTTPException: org.apache.http.conn.UnsupportedSchemeException: hdfs protocol is not supported
+
+
+  def time[R](text: String, block: => R): R = {
+      val t0 = System.nanoTime()
+      val result = block
+      val t1 = System.nanoTime()
+
+      val dt = t1 - t0
+      val sec = dt / 1000000000
+      val ns = dt % 1000000000
+      println(text + "> Elapsed time: " + sec + "." + ns + "ns")
+      result
+  }
+

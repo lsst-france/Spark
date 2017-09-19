@@ -1,3 +1,3 @@
 
-$HOME/sbt package
+$HOME/sbt/bin/sbt package
 
