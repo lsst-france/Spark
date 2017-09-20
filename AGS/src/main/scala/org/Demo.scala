@@ -1,4 +1,4 @@
-package org.datasyslab.geospark
+package org
 
 import com.vividsolutions.jts.geom.{Coordinate, Envelope, GeometryFactory, Polygon}
 import org.apache.log4j.{Level, Logger}
@@ -12,179 +12,182 @@ import org.datasyslab.geospark.spatialRDD.{CircleRDD, PointRDD, PolygonRDD}
 
 object Demo {
 
-	def main (arg: Array[String]) ={
+  def time[R](text: String, block: => R): R = {
+    val t0 = System.nanoTime()
+    val result = block
+    val t1 = System.nanoTime()
 
-		val tests = (
-			"GeoSpark in Scala",
-		)
+    val dt = t1 - t0
+    val sec = dt / 1000000000
+    val ns = dt % 1000000000
+    println("\n" + text + "> Elapsed time: " + sec + "," + ns + " s")
+    result
+  }
 
-		val conf = new SparkConf().setAppName("Demo").setMaster("local")
-		val sc = new SparkContext(conf)
-		Logger.getLogger("org").setLevel(Level.WARN)
-		Logger.getLogger("akka").setLevel(Level.WARN)
+  def main (arg: Array[String]) ={
 
-		val resourceFolder = System.getProperty("user.dir")+"/src/test/resources/"
+    val cores = 1000
+    val n = 1000000
+    val parts = 100000
 
-		val PointRDDInputLocation = resourceFolder+"arealm-small.csv"
-		val PointRDDSplitter = FileDataSplitter.CSV
-		val PointRDDIndexType = IndexType.RTREE
-		val PointRDDNumPartitions = 5
-		val PointRDDOffset = 0
+    val conf = new SparkConf().setMaster("local").setAppName("Demo").
+      set("spark.cores.max", "$cores").
+      set("spark.local.dir", "/mongo/log/tmp/").
+      set("spark.executor.memory", "200g").
+      set("spark.storageMemory.fraction", "0")
+    val sc = new SparkContext(conf)
 
-		val PolygonRDDInputLocation = resourceFolder + "primaryroads-polygon.csv"
-		val PolygonRDDSplitter = FileDataSplitter.CSV
-		val PolygonRDDNumPartitions = 5
-		val PolygonRDDStartOffset = 0
-		val PolygonRDDEndOffset = 8
+    println( "Hello World!" )
 
-		val geometryFactory=new GeometryFactory()
-		val kNNQueryPoint=geometryFactory.createPoint(new Coordinate(-84.01, 34.01))
-		val rangeQueryWindow=new Envelope (-90.01,-80.01,30.01,40.01)
-		val joinQueryPartitioningType = GridType.RTREE
-		val eachQueryLoopTimes=1
+    Logger.getLogger("org").setLevel(Level.WARN)
+    Logger.getLogger("akka").setLevel(Level.WARN)
 
-		var it = ""
+    val hdfs = "hdfs://134.158.75.222:8020/user/christian.arnault/"
+    val local = "file:/home/christian.arnault/geospark/GeoSpark/core/src/test/resources/"
 
-		it = "should pass spatial range query"
-		if (true){
-			val objectRDD = new PointRDD(sc, PointRDDInputLocation, PointRDDOffset, PointRDDSplitter, true, StorageLevel.MEMORY_ONLY)
-			for(i <- 1 to eachQueryLoopTimes)
-			{
-				val resultSize = RangeQuery.SpatialRangeQuery(objectRDD, rangeQueryWindow, false,false).count
-			}
-		}
+    // val resourceFolder = System.getProperty("user.dir")+"/src/test/resources/"
+    val resourceFolder = hdfs + "geospark/"
 
-		it = "should pass spatial range query using index"
-		if (false) {
-			val objectRDD = new PointRDD(sc, PointRDDInputLocation, PointRDDOffset, PointRDDSplitter, true, StorageLevel.MEMORY_ONLY)
-			objectRDD.buildIndex(PointRDDIndexType,false)
-			for(i <- 1 to eachQueryLoopTimes)
-			{
-				val resultSize = RangeQuery.SpatialRangeQuery(objectRDD, rangeQueryWindow, false,true).count
-			}
-		}
+    val PointRDDInputLocation = resourceFolder+"arealm-small.csv"
+    val PointRDDSplitter = FileDataSplitter.CSV
+    val PointRDDIndexType = IndexType.RTREE
+    val PointRDDNumPartitions = 5
+    val PointRDDOffset = 0
 
-		it = "should pass spatial knn query"
-		if (false){
-			val objectRDD = new PointRDD(sc, PointRDDInputLocation, PointRDDOffset, PointRDDSplitter, true, StorageLevel.MEMORY_ONLY)
-			for(i <- 1 to eachQueryLoopTimes)
-			{
-				val result = KNNQuery.SpatialKnnQuery(objectRDD, kNNQueryPoint, 1000,false)
-			}
-		}
+    val PolygonRDDInputLocation = resourceFolder + "primaryroads-polygon.csv"
+    val PolygonRDDSplitter = FileDataSplitter.CSV
+    val PolygonRDDNumPartitions = 5
+    val PolygonRDDStartOffset = 0
+    val PolygonRDDEndOffset = 8
 
-		it = "should pass spatial knn query using index"
-		if (false){
-			val objectRDD = new PointRDD(sc, PointRDDInputLocation, PointRDDOffset, PointRDDSplitter, true, StorageLevel.MEMORY_ONLY)
-			objectRDD.buildIndex(PointRDDIndexType,false)
-			for(i <- 1 to eachQueryLoopTimes)
-			{
-				val result = KNNQuery.SpatialKnnQuery(objectRDD, kNNQueryPoint, 1000, true)
-			}
-		}
+    val geometryFactory=new GeometryFactory()
+    val kNNQueryPoint=geometryFactory.createPoint(new Coordinate(-84.01, 34.01))
+    val rangeQueryWindow=new Envelope (-90.01,-80.01,30.01,40.01)
+    val joinQueryPartitioningType = GridType.RTREE
+    val eachQueryLoopTimes=1
 
-		it = "should pass spatial join query"
-		if (false){
-			val queryWindowRDD = new PolygonRDD(sc, PolygonRDDInputLocation, PolygonRDDStartOffset, PolygonRDDEndOffset, PolygonRDDSplitter, true)
-			val objectRDD = new PointRDD(sc, PointRDDInputLocation, PointRDDOffset, PointRDDSplitter, true, StorageLevel.MEMORY_ONLY)
+    var it = ""
 
-			objectRDD.spatialPartitioning(joinQueryPartitioningType)
-			queryWindowRDD.spatialPartitioning(objectRDD.grids)
+    it = "should pass spatial range query"
+    if (true){
+      val objectRDD = new PointRDD(sc, PointRDDInputLocation, PointRDDOffset, PointRDDSplitter, true, StorageLevel.MEMORY_ONLY)
+      val resultSize = time(it, RangeQuery.SpatialRangeQuery(objectRDD, rangeQueryWindow, false,false).count)
+      println(it, resultSize)
+    }
 
-			for(i <- 1 to eachQueryLoopTimes)
-			{
-				val resultSize = JoinQuery.SpatialJoinQuery(objectRDD,queryWindowRDD,false,true).count
-			}
-		}
+    it = "should pass spatial range query using index"
+    if (true) {
+      val objectRDD = new PointRDD(sc, PointRDDInputLocation, PointRDDOffset, PointRDDSplitter, true, StorageLevel.MEMORY_ONLY)
+      objectRDD.buildIndex(PointRDDIndexType,false)
+      val resultSize = time(it, RangeQuery.SpatialRangeQuery(objectRDD, rangeQueryWindow, false,true).count)
+      println(it, resultSize)
+    }
 
-		it = "should pass spatial join query using index" if (false){
-			val queryWindowRDD = new PolygonRDD(sc, PolygonRDDInputLocation, PolygonRDDStartOffset, PolygonRDDEndOffset, PolygonRDDSplitter, true)
-			val objectRDD = new PointRDD(sc, PointRDDInputLocation, PointRDDOffset, PointRDDSplitter, true, StorageLevel.MEMORY_ONLY)
+    it = "should pass spatial knn query"
+    if (true){
+      val objectRDD = new PointRDD(sc, PointRDDInputLocation, PointRDDOffset, PointRDDSplitter, true, StorageLevel.MEMORY_ONLY)
+      val result = time(it, KNNQuery.SpatialKnnQuery(objectRDD, kNNQueryPoint, 1000,false))
+      println(it, result)
+    }
 
-			objectRDD.spatialPartitioning(joinQueryPartitioningType)
-			queryWindowRDD.spatialPartitioning(objectRDD.grids)
+    it = "should pass spatial knn query using index"
+    if (true){
+      val objectRDD = new PointRDD(sc, PointRDDInputLocation, PointRDDOffset, PointRDDSplitter, true, StorageLevel.MEMORY_ONLY)
+      objectRDD.buildIndex(PointRDDIndexType,false)
+      val result = time(it, KNNQuery.SpatialKnnQuery(objectRDD, kNNQueryPoint, 1000, true))
+      println(it, result)
+    }
 
-			objectRDD.buildIndex(PointRDDIndexType,true)
+    it = "should pass spatial join query"
+    if (true){
+      val queryWindowRDD = new PolygonRDD(sc, PolygonRDDInputLocation, PolygonRDDStartOffset, PolygonRDDEndOffset, PolygonRDDSplitter, true)
+      val objectRDD = new PointRDD(sc, PointRDDInputLocation, PointRDDOffset, PointRDDSplitter, true, StorageLevel.MEMORY_ONLY)
 
-			for(i <- 1 to eachQueryLoopTimes)
-			{
-				val resultSize = JoinQuery.SpatialJoinQuery(objectRDD,queryWindowRDD,true,false).count()
-			}
-		}
+      objectRDD.spatialPartitioning(joinQueryPartitioningType)
+      queryWindowRDD.spatialPartitioning(objectRDD.grids)
 
-		it = "should pass distance join query"
-		if (false){
-			val objectRDD = new PointRDD(sc, PointRDDInputLocation, PointRDDOffset, PointRDDSplitter, true, StorageLevel.MEMORY_ONLY)
-			val queryWindowRDD = new CircleRDD(objectRDD,0.1)
+      val resultSize = time(it, JoinQuery.SpatialJoinQuery(objectRDD,queryWindowRDD,false,true).count)
+      println(it, resultSize)
+    }
 
-			objectRDD.spatialPartitioning(GridType.RTREE)
-			queryWindowRDD.spatialPartitioning(objectRDD.grids)
+    it = "should pass spatial join query using index"
+    if (true){
+      val queryWindowRDD = new PolygonRDD(sc, PolygonRDDInputLocation, PolygonRDDStartOffset, PolygonRDDEndOffset, PolygonRDDSplitter, true)
+      val objectRDD = new PointRDD(sc, PointRDDInputLocation, PointRDDOffset, PointRDDSplitter, true, StorageLevel.MEMORY_ONLY)
 
-			for(i <- 1 to eachQueryLoopTimes)
-			{
-				val resultSize = JoinQuery.DistanceJoinQuery(objectRDD,queryWindowRDD,false,true).count()
-			}
-		}
+      objectRDD.spatialPartitioning(joinQueryPartitioningType)
+      queryWindowRDD.spatialPartitioning(objectRDD.grids)
 
-		it = "should pass distance join query using index"
-		if (false){
-			val objectRDD = new PointRDD(sc, PointRDDInputLocation, PointRDDOffset, PointRDDSplitter, true, StorageLevel.MEMORY_ONLY)
-			val queryWindowRDD = new CircleRDD(objectRDD,0.1)
+      objectRDD.buildIndex(PointRDDIndexType,true)
 
-			objectRDD.spatialPartitioning(GridType.RTREE)
-			queryWindowRDD.spatialPartitioning(objectRDD.grids)
+      val resultSize = time(it, JoinQuery.SpatialJoinQuery(objectRDD,queryWindowRDD,true,false).count())
+      println(it, resultSize)
+    }
 
-			objectRDD.buildIndex(IndexType.RTREE,true)
+    it = "should pass distance join query"
+    if (true){
+      val objectRDD = new PointRDD(sc, PointRDDInputLocation, PointRDDOffset, PointRDDSplitter, true, StorageLevel.MEMORY_ONLY)
+      val queryWindowRDD = new CircleRDD(objectRDD,0.1)
 
-			for(i <- 1 to eachQueryLoopTimes)
-			{
-				val resultSize = JoinQuery.DistanceJoinQuery(objectRDD,queryWindowRDD,true,true).count
-			}
-		}
+      objectRDD.spatialPartitioning(GridType.RTREE)
+      queryWindowRDD.spatialPartitioning(objectRDD.grids)
 
-		it = "should pass earthdata format mapper test"
-		if (false){
-			val InputLocation = System.getProperty("user.dir") + "/src/test/resources/modis/modis.csv"
-			val splitter = FileDataSplitter.CSV
-			val indexType = IndexType.RTREE
-			val queryEnvelope = new Envelope(-90.01, -80.01, 30.01, 40.01)
-			val numPartitions = 5
-			val loopTimes = 1
-			val HDFIncrement = 5
-			val HDFOffset = 2
-			val HDFRootGroupName = "MOD_Swath_LST"
-			val HDFDataVariableName = "LST"
-			val urlPrefix = System.getProperty("user.dir") + "/src/test/resources/modis/"
-			val HDFDataVariableList = Array("LST", "QC", "Error_LST", "Emis_31", "Emis_32")
+      val resultSize = time(it, JoinQuery.DistanceJoinQuery(objectRDD,queryWindowRDD,false,true).count())
+      println(it, resultSize)
+    }
 
-			val earthdataHDFPoint = new EarthdataHDFPointMapper(HDFIncrement, HDFOffset, HDFRootGroupName, HDFDataVariableList, HDFDataVariableName, urlPrefix)
-			val spatialRDD = new PointRDD(sc, InputLocation, numPartitions, earthdataHDFPoint, StorageLevel.MEMORY_ONLY)
-			var i = 0
-			while (i < loopTimes) {
-				var resultSize = 0L
-				resultSize = RangeQuery.SpatialRangeQuery(spatialRDD, queryEnvelope, false, false).count
-				i=i+1
-			}
-		}
+    it = "should pass distance join query using index"
+    if (true){
+      val objectRDD = new PointRDD(sc, PointRDDInputLocation, PointRDDOffset, PointRDDSplitter, true, StorageLevel.MEMORY_ONLY)
+      val queryWindowRDD = new CircleRDD(objectRDD,0.1)
 
-		it = "should pass CRS transformed spatial range query"
-		if (false){
-			val objectRDD = new PointRDD(sc, PointRDDInputLocation, PointRDDOffset, PointRDDSplitter, true, StorageLevel.MEMORY_ONLY, "epsg:4326","epsg:3005")
-			for(i <- 1 to eachQueryLoopTimes)
-			{
-				val resultSize = RangeQuery.SpatialRangeQuery(objectRDD, rangeQueryWindow, false,false).count
-			}
-		}
+      objectRDD.spatialPartitioning(GridType.RTREE)
+      queryWindowRDD.spatialPartitioning(objectRDD.grids)
+
+      objectRDD.buildIndex(IndexType.RTREE,true)
+
+      val resultSize = time(it, JoinQuery.DistanceJoinQuery(objectRDD,queryWindowRDD,true,true).count)
+      println(it, resultSize)
+    }
+
+    it = "should pass earthdata format mapper test"
+    if (true){
+      // val InputLocation = System.getProperty("user.dir") + "/src/test/resources/modis/modis.csv"
+      val InputLocation = local + "modis/modis.csv"
+      val splitter = FileDataSplitter.CSV
+      val indexType = IndexType.RTREE
+      val queryEnvelope = new Envelope(-90.01, -80.01, 30.01, 40.01)
+      val numPartitions = 5
+      val HDFIncrement = 5
+      val HDFOffset = 2
+      val HDFRootGroupName = "MOD_Swath_LST"
+      val HDFDataVariableName = "LST"
+      val urlPrefix = System.getProperty("user.dir") + "/src/test/resources/modis/"
+      val HDFDataVariableList = Array("LST", "QC", "Error_LST", "Emis_31", "Emis_32")
+
+      val earthdataHDFPoint = new EarthdataHDFPointMapper(HDFIncrement, HDFOffset, HDFRootGroupName, HDFDataVariableList, HDFDataVariableName, urlPrefix)
+      val spatialRDD = new PointRDD(sc, InputLocation, numPartitions, earthdataHDFPoint, StorageLevel.MEMORY_ONLY)
+      val resultSize = time(it, RangeQuery.SpatialRangeQuery(spatialRDD, queryEnvelope, false, false).count)
+      println(it, resultSize)
+    }
+
+    it = "should pass CRS transformed spatial range query"
+    if (true){
+      val objectRDD = new PointRDD(sc, PointRDDInputLocation, PointRDDOffset, PointRDDSplitter, true, StorageLevel.MEMORY_ONLY, "epsg:4326","epsg:3005")
+      val resultSize = time(it, RangeQuery.SpatialRangeQuery(objectRDD, rangeQueryWindow, false,false).count)
+      println(it, resultSize)
+    }
 
 		it = "should pass CRS transformed spatial range query using index"
-		if (false){
+		if (true){
 			val objectRDD = new PointRDD(sc, PointRDDInputLocation, PointRDDOffset, PointRDDSplitter, true, StorageLevel.MEMORY_ONLY, "epsg:4326","epsg:3005")
 			objectRDD.buildIndex(PointRDDIndexType,false)
-			for(i <- 1 to eachQueryLoopTimes)
-			{
-				val resultSize = RangeQuery.SpatialRangeQuery(objectRDD, rangeQueryWindow, false,true).count
-			}
+      val resultSize = RangeQuery.SpatialRangeQuery(objectRDD, rangeQueryWindow, false,true).count
+      println(it, resultSize)
 		}
+
+    println("done")
+    sc.stop()
 	}
 }
 

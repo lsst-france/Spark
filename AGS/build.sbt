@@ -24,5 +24,7 @@ libraryDependencies += "com.google.code.gson" % "gson" % "2.3"
 
 libraryDependencies += "gov.nasa.gsfc.heasarc" % "nom-tam-fits" % "1.15.2"
 
+libraryDependencies += "org.datasyslab" % "sernetcdf" % "0.1.0"
+
 resolvers += "Akka Repository" at "http://repo.akka.io/releases/"
 
