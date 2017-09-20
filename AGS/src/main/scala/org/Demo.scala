@@ -1,20 +1,24 @@
 package org.datasyslab.geospark
 
-import com.vividsolutions.jts.geom.{Coordinate, Envelope, GeometryFactory}
+import com.vividsolutions.jts.geom.{Coordinate, Envelope, GeometryFactory, Polygon}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkConf, SparkContext}
 import org.datasyslab.geospark.enums.{FileDataSplitter, GridType, IndexType}
 import org.datasyslab.geospark.formatMapper.EarthdataHDFPointMapper
+import org.datasyslab.geospark.formatMapper.shapefileParser.ShapefileRDD
 import org.datasyslab.geospark.spatialOperator.{JoinQuery, KNNQuery, RangeQuery}
 import org.datasyslab.geospark.spatialRDD.{CircleRDD, PointRDD, PolygonRDD}
-import org.scalatest.FunSpec
 
-class scalaTest extends FunSpec {
+object Demo {
 
-	describe("GeoSpark in Scala") {
+	def main (arg: Array[String]) ={
 
-		val conf = new SparkConf().setAppName("scalaTest").setMaster("local[2]")
+		val tests = (
+			"GeoSpark in Scala",
+		)
+
+		val conf = new SparkConf().setAppName("Demo").setMaster("local")
 		val sc = new SparkContext(conf)
 		Logger.getLogger("org").setLevel(Level.WARN)
 		Logger.getLogger("akka").setLevel(Level.WARN)
@@ -39,7 +43,10 @@ class scalaTest extends FunSpec {
 		val joinQueryPartitioningType = GridType.RTREE
 		val eachQueryLoopTimes=1
 
-		it("should pass spatial range query") {
+		var it = ""
+
+		it = "should pass spatial range query"
+		if (true){
 			val objectRDD = new PointRDD(sc, PointRDDInputLocation, PointRDDOffset, PointRDDSplitter, true, StorageLevel.MEMORY_ONLY)
 			for(i <- 1 to eachQueryLoopTimes)
 			{
@@ -47,7 +54,8 @@ class scalaTest extends FunSpec {
 			}
 		}
 
-		it("should pass spatial range query using index") {
+		it = "should pass spatial range query using index"
+		if (false) {
 			val objectRDD = new PointRDD(sc, PointRDDInputLocation, PointRDDOffset, PointRDDSplitter, true, StorageLevel.MEMORY_ONLY)
 			objectRDD.buildIndex(PointRDDIndexType,false)
 			for(i <- 1 to eachQueryLoopTimes)
@@ -56,7 +64,8 @@ class scalaTest extends FunSpec {
 			}
 		}
 
-		it("should pass spatial knn query") {
+		it = "should pass spatial knn query"
+		if (false){
 			val objectRDD = new PointRDD(sc, PointRDDInputLocation, PointRDDOffset, PointRDDSplitter, true, StorageLevel.MEMORY_ONLY)
 			for(i <- 1 to eachQueryLoopTimes)
 			{
@@ -64,7 +73,8 @@ class scalaTest extends FunSpec {
 			}
 		}
 
-		it("should pass spatial knn query using index") {
+		it = "should pass spatial knn query using index"
+		if (false){
 			val objectRDD = new PointRDD(sc, PointRDDInputLocation, PointRDDOffset, PointRDDSplitter, true, StorageLevel.MEMORY_ONLY)
 			objectRDD.buildIndex(PointRDDIndexType,false)
 			for(i <- 1 to eachQueryLoopTimes)
@@ -73,7 +83,8 @@ class scalaTest extends FunSpec {
 			}
 		}
 
-		it("should pass spatial join query") {
+		it = "should pass spatial join query"
+		if (false){
 			val queryWindowRDD = new PolygonRDD(sc, PolygonRDDInputLocation, PolygonRDDStartOffset, PolygonRDDEndOffset, PolygonRDDSplitter, true)
 			val objectRDD = new PointRDD(sc, PointRDDInputLocation, PointRDDOffset, PointRDDSplitter, true, StorageLevel.MEMORY_ONLY)
 
@@ -86,7 +97,7 @@ class scalaTest extends FunSpec {
 			}
 		}
 
-		it("should pass spatial join query using index") {
+		it = "should pass spatial join query using index" if (false){
 			val queryWindowRDD = new PolygonRDD(sc, PolygonRDDInputLocation, PolygonRDDStartOffset, PolygonRDDEndOffset, PolygonRDDSplitter, true)
 			val objectRDD = new PointRDD(sc, PointRDDInputLocation, PointRDDOffset, PointRDDSplitter, true, StorageLevel.MEMORY_ONLY)
 
@@ -101,7 +112,8 @@ class scalaTest extends FunSpec {
 			}
 		}
 
-		it("should pass distance join query") {
+		it = "should pass distance join query"
+		if (false){
 			val objectRDD = new PointRDD(sc, PointRDDInputLocation, PointRDDOffset, PointRDDSplitter, true, StorageLevel.MEMORY_ONLY)
 			val queryWindowRDD = new CircleRDD(objectRDD,0.1)
 
@@ -114,7 +126,8 @@ class scalaTest extends FunSpec {
 			}
 		}
 
-		it("should pass distance join query using index") {
+		it = "should pass distance join query using index"
+		if (false){
 			val objectRDD = new PointRDD(sc, PointRDDInputLocation, PointRDDOffset, PointRDDSplitter, true, StorageLevel.MEMORY_ONLY)
 			val queryWindowRDD = new CircleRDD(objectRDD,0.1)
 
@@ -129,7 +142,8 @@ class scalaTest extends FunSpec {
 			}
 		}
 
-		it("should pass earthdata format mapper test") {
+		it = "should pass earthdata format mapper test"
+		if (false){
 			val InputLocation = System.getProperty("user.dir") + "/src/test/resources/modis/modis.csv"
 			val splitter = FileDataSplitter.CSV
 			val indexType = IndexType.RTREE
@@ -153,7 +167,8 @@ class scalaTest extends FunSpec {
 			}
 		}
 
-		it("should pass CRS transformed spatial range query") {
+		it = "should pass CRS transformed spatial range query"
+		if (false){
 			val objectRDD = new PointRDD(sc, PointRDDInputLocation, PointRDDOffset, PointRDDSplitter, true, StorageLevel.MEMORY_ONLY, "epsg:4326","epsg:3005")
 			for(i <- 1 to eachQueryLoopTimes)
 			{
@@ -161,7 +176,8 @@ class scalaTest extends FunSpec {
 			}
 		}
 
-		it("should pass CRS transformed spatial range query using index") {
+		it = "should pass CRS transformed spatial range query using index"
+		if (false){
 			val objectRDD = new PointRDD(sc, PointRDDInputLocation, PointRDDOffset, PointRDDSplitter, true, StorageLevel.MEMORY_ONLY, "epsg:4326","epsg:3005")
 			objectRDD.buildIndex(PointRDDIndexType,false)
 			for(i <- 1 to eachQueryLoopTimes)
@@ -171,3 +187,5 @@ class scalaTest extends FunSpec {
 		}
 	}
 }
+
+

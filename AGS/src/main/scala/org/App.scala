@@ -13,7 +13,7 @@ import org.datasyslab.geospark.enums.{FileDataSplitter, GridType, IndexType}
 import org.datasyslab.geospark.formatMapper.EarthdataHDFPointMapper
 import org.datasyslab.geospark.spatialOperator.{JoinQuery, KNNQuery, RangeQuery}
 import org.datasyslab.geospark.spatialRDD.{CircleRDD, PointRDD, PolygonRDD}
-import org.scalatest.FunSpec
+// import org.scalatest.FunSpec
 import com.vividsolutions.jts.index.strtree.STRtree
 
 //import org.{ExtPoint, ExtPointRDD}
@@ -39,8 +39,17 @@ object App {
   }
 
   def main (arg: Array[String]) ={
-	
-	  val conf = new SparkConf().setMaster("local[4]").setAppName("My App")
+
+    val cores = 1000
+    val n = 1000000
+    val parts = 100000
+
+
+    val conf = new SparkConf().setMaster("local").setAppName("My App").
+      set("spark.cores.max", "$cores").
+      set("spark.local.dir", "/mongo/log/tmp/").
+      set("spark.executor.memory", "200g").
+      set("spark.storageMemory.fraction", "0")
 	  val sc = new SparkContext(conf)
 
     println( "Hello World!" )
@@ -76,9 +85,6 @@ object App {
     val fact = new GeometryFactory()
     def printType[T](t:String, x:T) :Unit = {println(t + x.getClass.toString())}
 
-    val n = 10000
-    val parts = 100
-
     val x0 = -180.0
     val x1 = 180.0
     val y0 = 25.0
@@ -99,6 +105,8 @@ object App {
     // printType("type(x)=", x)
 
     if (true) {
+      println("=========================== Test 1")
+
       import org.datasyslab.geospark.rangeJudgement.RangeFilter
 
       // val objectRDD = new PointRDD(sc, PointRDDInputLocation, PointRDDOffset, PointRDDSplitter, true, StorageLevel.MEMORY_ONLY)
@@ -115,7 +123,7 @@ object App {
 
       val boundary = objectRDD.boundary
 
-      println("Boundary = " + boundary.mkString(", "))
+      // println("Boundary = " + boundary.mkString(", "))
 
 
       val points = objectRDD.getRawSpatialRDD.count()
@@ -136,26 +144,12 @@ object App {
     }
 
     if (true) {
+      println("=========================== Test 2")
       //val objectRDD = new PointRDD(sc, PointRDDInputLocation, PointRDDOffset, PointRDDSplitter, true, StorageLevel.MEMORY_ONLY)
       val x = sc.parallelize(extPoints, parts)
       val objectRDD = new SExtPointRDD(x)
 
-      println("RDD2 Boundary = " + objectRDD.boundary.mkString(", "))
-
-      def bi() = {
-        val rt = new STRtree
-        while ( {
-          spatialObjects.hasNext
-        }) {
-          val spatialObject = spatialObjects.next.asInstanceOf[Geometry]
-          rt.insert(spatialObject.getEnvelopeInternal, spatialObject)
-        }
-        val result = new util.HashSet[AnyRef]
-        rt.query(new Envelope(0.0, 0.0, 0.0, 0.0))
-        result.add(rt)
-        return result.iterator
-
-      }
+      // println("RDD2 Boundary = " + objectRDD.boundary.mkString(", "))
 
       val i = objectRDD.buildIndex(PointRDDIndexType, false)
       println("index=" + i.toString)
@@ -170,9 +164,19 @@ object App {
     }
 
     if (false) {
-      // val objectRDD = new PointRDD(sc, PointRDDInputLocation, PointRDDOffset, PointRDDSplitter, true, StorageLevel.MEMORY_ONLY)
-      val x = sc.parallelize(extPoints, parts)
-      val objectRDD = new SExtPointRDD(x)
+      println("=========================== Test 3")
+
+      val simul = false
+
+      var objectRDD:PointRDD = null
+
+      if (simul){
+        val x = sc.parallelize(extPoints, parts)
+        objectRDD = new SExtPointRDD(x)
+      }
+      else{
+        objectRDD = new PointRDD(sc, PointRDDInputLocation, PointRDDOffset, PointRDDSplitter, true, StorageLevel.MEMORY_ONLY)
+      }
 
       for(i <- 1 to eachQueryLoopTimes) {
         val result = KNNQuery.SpatialKnnQuery(objectRDD, kNNQueryPoint, 1000, false)
@@ -314,5 +318,6 @@ object App {
     }
 
     println("done")
+    sc.stop()
   }
 }
