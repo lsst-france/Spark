@@ -19,4 +19,5 @@ import org.datasyslab.geospark.spatialRDD.PointRDD
 
 class SExtPointRDD[T](r:RDD[T]) extends PointRDD(r.asInstanceOf[RDD[Point]])
 {
+  analyze()
 }
