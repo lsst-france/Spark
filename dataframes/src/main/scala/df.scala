@@ -22,7 +22,13 @@ object SimpleApp {
   def main(args: Array[String]) {
       println("DF")
 
-      val conf = new SparkConf().setAppName("DF")
+      val conf = new SparkConf().setMaster("local").setAppName("DF").
+        set("spark.cores.max", "$cores").
+        set("spark.local.dir", "/mongo/log/tmp/").
+        set("spark.executor.memory", "200g").
+        set("spark.storageMemory.fraction", "0")
+
+      // val conf = new SparkConf().setAppName("DF")
       val sc = new SparkContext(conf)
 
       val spark = SparkSession

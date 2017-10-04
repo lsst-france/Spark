@@ -1,8 +1,20 @@
 package sparkapps
 
 import nom.tam.fits._
+import java.io.File
+
+// ./PyPlotCode/data/fits/
 
 object  FitsReader {
+
+  def getListOfFiles(dir: String):List[File] = {
+    val d = new File(dir)
+    if (d.exists && d.isDirectory) {
+        d.listFiles.filter(_.isFile).toList
+    } else {
+        List[File]()
+    }
+  }
 
   def fitsJob() {
 
@@ -39,6 +51,10 @@ object  FitsReader {
     } while (c.hasNext)
   }
 
-  def main(args: Array[String]) = fitsJob()
+  def main(args: Array[String]) =
+    {
+      getListOfFiles(System.getProperty("user.dir") + "/PyPlotCode/data/fits/")
+      fitsJob()
+    }
 }
 

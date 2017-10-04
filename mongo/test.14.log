@@ -1,3 +1,0 @@
-3.4.0
-error 192.168.56.233:27117: [Errno 111] Connection refused
--------------------------------- select count(*) from ForcedSource where psfFlux between 0.1 and 0.2; 30.075 seconds
