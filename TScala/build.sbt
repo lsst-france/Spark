@@ -1,4 +1,4 @@
-name := "TSpark"
+name := "TScala"
 
 version := "0.1"
 
