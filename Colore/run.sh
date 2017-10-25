@@ -13,7 +13,8 @@ mem="30"
 records=""
 block=""
 steps=""
-cores="--total-executor-cores 10 "
+cores="--total-executor-cores 8 "
+conf=""
 
 # Set SPARK_MEM if it isn't already set since we also use it for this process
 SPARK_MEM=${SPARK_MEM:-25g}
@@ -57,7 +58,7 @@ do
 
   --conf=*)
     c=`echo $1 | sed "s|--conf=||"`
-    conf="--conf spark.kryoserializer.buffer.max=${c}mb --conf spark.local.dir=/mongo/log/tmp"
+    # conf="--conf spark.kryoserializer.buffer.max=${c}mb --conf spark.local.dir=/mongo/log/tmp"
     ;;
 
   --records=*)
@@ -88,10 +89,11 @@ do
 done
 
 
-jars="--jars $HOME/spark-avro/target/scala-2.11/spark-avro_2.11-3.2.1-SNAPSHOT.jar"
+jars=""
+#  jars="--jars $HOME/spark-avro/target/scala-2.11/spark-avro_2.11-3.2.1-SNAPSHOT.jar"
 ### modules="--py-files args.py,configuration.py,dataset.py,job.py,reference_catalog.py,stepper.py"
 
-complete="spark-submit --conf "spark.local.dir=/mongo/log/tmp" $jars $memory $cores $conf $modules $command $records $block $steps"
+complete="spark-submit $conf  $jars $memory $cores $conf $modules $command $records $block $steps"
 
 echo $complete
 time $complete

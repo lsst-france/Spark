@@ -8,7 +8,9 @@ from pyspark.sql.types import *
 import argparse
 import random
 
-cores = 10
+import stepper as stp
+
+cores = 8
 
 print("cores = ", cores)
 
@@ -16,15 +18,15 @@ spark = SparkSession\
        .builder\
        .appName("Colore")\
        .config("spark.cores.max", "{}".format(cores))\
-       .config("spark.local.dir=/mongo/log/tmp/")\
        .config("spark.executor.memory=20g") \
        .getOrCreate()
 
+       # .config("spark.local.dir=/mongo/log/tmp/")\
        # .config("spark.storage.memoryFraction=0")\
 
 sc = spark.sparkContext
 
-hdu = fits.open('/mongo/log/colore/batch/gal10249.fits')
+hdu = fits.open('/home/ubuntu/gal10249.fits')
 
 hdu.info()
 hdu[0].header
@@ -48,15 +50,44 @@ for row in range(10):
 
 data = hdu[1].data
 
-points = 1000
-ra = data['RA'][:points]
-dec = data['DEC'][:points]
-z = data['Z_COSMO'][:points]
-dz = data['DZ_RSD'][:points]
+dfs = []
 
-points = np.column_stack((ra, dec, z, dz))
+s1 = stp.Stepper()
+s = stp.Stepper()
 
-points_rdd = sc.parallelize(points, 10)
+subset = 100 
+steps = 20
+part = subset / steps
+block = int((data.size / subset) / steps)
 
-points_rdd.take(10)
+print("steps = ", steps, " part = ", part, " block = ", block, " total data = ", (block * steps))
+
+for i in range(steps):
+  start = int(i * block)
+  ra = data['RA'][start:start+block]
+  dec = data['DEC'][start:start+block]
+  z = data['Z_COSMO'][start:start+block]
+  dz = data['DZ_RSD'][start:start+block]
+
+  points = np.column_stack((ra, dec, z, dz))
+
+  dfs.append(sc.parallelize(points, 10).map(lambda x: (float(x[0]), float(x[1]), float(x[2]), float(x[3]))))
+
+  # print("i=", i, " points=", points_df.take(10))
+  s.show_step("==> i={}".format(i))
+
+allp = sc.union(dfs).toDF(['RA', 'DEC', 'Z', 'DZ'])
+
+s1.show_step("==> total")
+
+print(allp.show(10))
+
+maxra = allp.agg({'RA' : "max"}).collect()[0]
+minra = allp.agg({'RA' : "min"}).collect()[0]
+maxdec = allp.agg({'DEC' : "max"}).collect()[0]
+mindec = allp.agg({'DEC' : "min"}).collect()[0]
+
+
+print(maxra, minra, maxdec, mindec)
+
 
