@@ -1,0 +1,20 @@
+
+from astropy.io import fits
+import numpy as np
+
+hdu = fits.open('/mongo/log/colore/batch/gal10249.fits')
+
+data = hdu[1].data
+c = data.columns
+cols = fits.ColDefs([c['RA'], c['DEC']])
+data2 = fits.BinTableHDU.from_columns(cols)
+a = np.array(data2.data.astype('<f4'))
+
+
+
+data = hdu[1].data[0:1000]
+
+sc.parallelize(data, 10)
+
+
+
