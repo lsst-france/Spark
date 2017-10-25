@@ -26,7 +26,10 @@ spark = SparkSession\
 
 sc = spark.sparkContext
 
-hdu = fits.open('/home/ubuntu/gal10249.fits')
+where = '/home/ubuntu/'
+where = '/mongo/log/colore/batch/'
+
+hdu = fits.open(where + 'gal10249.fits')
 
 hdu.info()
 hdu[0].header
