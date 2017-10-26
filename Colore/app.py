@@ -2,6 +2,7 @@
 from pyspark.sql import SparkSession
 from pyspark.sql import functions
 
+import os
 from astropy.io import fits
 import numpy as np
 from pyspark.sql.types import *
@@ -10,24 +11,42 @@ import random
 
 import stepper as stp
 
-cores = 100
+cores = 1
+tmp = '/'
+where = '/'
+
+if os.path.exists('/mongo'):
+    where = '/mongo/log/colore/batch/'
+    cores = 100
+    tmp = '/mongo/log/tmp/'
+elif os.path.exists('/home/ubuntu/'):
+    where = '/home/ubuntu/'
+    cores = 8
+    tmp = '/home/ubuntu/'
+else:
+    print('where can I get fits files?')
+    exit()
+
 
 print("cores = ", cores)
+
 
 spark = SparkSession\
        .builder\
        .appName("Colore")\
        .config("spark.cores.max", "{}".format(cores))\
-       .config("spark.executor.memory=20g") \
+       .config("spark.executor.memory=200g") \
+       .config("spark.local.dir={}".format(tmp))\
+       .config("spark.storage.memoryFraction=0")\
        .getOrCreate()
 
        # .config("spark.local.dir=/mongo/log/tmp/")\
        # .config("spark.storage.memoryFraction=0")\
 
-sc = spark.sparkContext
 
-where = '/home/ubuntu/'
-where = '/mongo/log/colore/batch/'
+# df.write.mode("overwrite").save("./images")
+
+sc = spark.sparkContext
 
 hdu = fits.open(where + 'gal10249.fits')
 
