@@ -13,7 +13,7 @@ mem="30"
 records=""
 block=""
 steps=""
-cores="--total-executor-cores 8 "
+cores="--total-executor-cores 100 "
 conf=""
 
 # Set SPARK_MEM if it isn't already set since we also use it for this process

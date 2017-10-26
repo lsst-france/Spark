@@ -10,7 +10,7 @@ import random
 
 import stepper as stp
 
-cores = 8
+cores = 100
 
 print("cores = ", cores)
 
@@ -58,8 +58,8 @@ dfs = []
 s1 = stp.Stepper()
 s = stp.Stepper()
 
-subset = 100 
-steps = 20
+subset = 1 
+steps = 100
 part = subset / steps
 block = int((data.size / subset) / steps)
 
