@@ -108,7 +108,7 @@ def build(sc, data, subset, steps):
 
   return sc.union(dfs).toDF(['RA', 'DEC', 'Z', 'DZ'])
 
-allp = build(sc, data, subset=.01, steps=20)
+allp = build(sc, data, subset=1.0, steps=20)
 
 s1.show_step("==> total")
 
