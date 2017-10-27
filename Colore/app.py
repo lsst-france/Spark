@@ -76,6 +76,9 @@ s1 = stp.Stepper()
 s = stp.Stepper()
 
 def build(sc, data, subset, steps):
+
+  partitions = int((data.size * subset) / 10000)
+
   dfs = []
 
   subset = int(1.0 / subset)
@@ -86,7 +89,7 @@ def build(sc, data, subset, steps):
   part = subset / steps
   block = int((data.size / subset) / steps)
 
-  print("steps = ", steps, " part = ", part, " block = ", block, " total data = ", (block * steps))
+  print("steps = ", steps, " part = ", part, " block = ", block, " total data = ", (block * steps), " partitions = ", partitions)
 
 
   for i in range(steps):
@@ -98,26 +101,29 @@ def build(sc, data, subset, steps):
 
     points = np.column_stack((ra, dec, z, dz))
 
-    dfs.append(sc.parallelize(points, 10000).map(lambda x: (float(x[0]), float(x[1]), float(x[2]), float(x[3]))))
+    dfs.append(sc.parallelize(points, partitions).map(lambda x: (float(x[0]), float(x[1]), float(x[2]), float(x[3]))))
 
     # print("i=", i, " points=", points_df.take(10))
     s.show_step("==> i={}".format(i))
 
   return sc.union(dfs).toDF(['RA', 'DEC', 'Z', 'DZ'])
 
-allp = build(sc, data, subset=1, steps=20)
+allp = build(sc, data, subset=.01, steps=20)
 
 s1.show_step("==> total")
 
-## print(allp.show(10))
+print(allp.show(10))
 
-s2 = stp.Stepper()
+allp.write.mode("overwrite").save("./colore")
+s1.show_step('write data')
 
-minmax = allp.agg(F.min('RA'), F.max('RA'), F.min('DEC'), F.max('DEC')).collect()
 
-s2.show_step("get min-max")
+def get_minmax(allp):
+    s2 = stp.Stepper()
+    minmax = allp.agg(F.min('RA'), F.max('RA'), F.min('DEC'), F.max('DEC')).collect()
+    s2.show_step("get min-max")
+    print(minmax)
 
-print(minmax)
 
 
 
