@@ -21,7 +21,7 @@ if os.path.exists('/mongo'):
     tmp = '/mongo/log/tmp/'
 elif os.path.exists('/home/ubuntu/'):
     where = '/home/ubuntu/'
-    cores = 6
+    cores = 8
     tmp = '/home/ubuntu/'
 else:
     print('where can I get fits files?')
@@ -35,11 +35,15 @@ spark = SparkSession\
        .builder\
        .appName("Colore")\
        .config("spark.local.dir={}".format(tmp))\
-       .config("spark.storage.memoryFraction=0")\
+       .config("spark.memory.fraction=0.8")\
        .getOrCreate()
 
 
 """
+
+       .config("spark.memory.fraction=0.8")\
+       .config("spark.storage.memoryFraction=0")\
+
        .config("spark.cores.max", "{}".format(cores))\
        .config("spark.executor.memory=20g") \
 """
@@ -75,12 +79,14 @@ data = hdu[1].data
 s1 = stp.Stepper()
 s = stp.Stepper()
 
-def build(sc, data, subset, steps):
-
-  partitions = int((data.size * subset) / 10000)
-
-  dfs = []
-
+"""
+Transpose the data table columns => rows
+Work upon a "subset" = % of the full data table
+And apply the transposition by blocks ("steps" = # blocks)
+"""
+def build(data, subset, steps):
+  # will create a list of transposed arrays
+  points = []
   subset = int(1.0 / subset)
 
   if subset <= 0:
@@ -89,7 +95,7 @@ def build(sc, data, subset, steps):
   part = subset / steps
   block = int((data.size / subset) / steps)
 
-  print("steps = ", steps, " part = ", part, " block = ", block, " total data = ", (block * steps), " partitions = ", partitions)
+  print("steps = ", steps, " part = ", part, " block = ", block, " total data = ", (block * steps))
 
 
   for i in range(steps):
@@ -99,22 +105,37 @@ def build(sc, data, subset, steps):
     z = data['Z_COSMO'][start:start+block]
     dz = data['DZ_RSD'][start:start+block]
 
-    points = np.column_stack((ra, dec, z, dz))
+    points.append(np.column_stack((ra, dec, z, dz)))
 
-    dfs.append(sc.parallelize(points, partitions).map(lambda x: (float(x[0]), float(x[1]), float(x[2]), float(x[3]))))
-
-    # print("i=", i, " points=", points_df.take(10))
     s.show_step("==> i={}".format(i))
 
-  return sc.union(dfs).toDF(['RA', 'DEC', 'Z', 'DZ'])
+  return np.concatenate(points)
+#=============================================
 
-allp = build(sc, data, subset=1.0, steps=20)
+allp = build(data, subset=1.0, steps=20)
 
 s1.show_step("==> total")
 
-print(allp.show(10))
+# build a RDD from the transposed data. 
+rdd = sc.parallelize(allp, 100000).map(lambda x: (float(x[0]), float(x[1]), float(x[2]), float(x[3])))
 
-allp.write.mode("overwrite").save("./colore")
+s1.show_step("==> parallelize")
+
+# lower the patitioning
+rdd = rdd.coalesce(100)
+
+s1.show_step("==> coalesce")
+
+# make it a dataframe
+df = rdd.toDF(['RA', 'DEC', 'Z', 'DZ'])
+
+s1.show_step("==> dataframe")
+
+print(df.show(10))
+
+# save the result
+df.write.mode("overwrite").save("./colore")
+
 s1.show_step('write data')
 
 
