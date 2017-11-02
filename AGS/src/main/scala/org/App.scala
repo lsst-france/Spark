@@ -18,11 +18,7 @@ import com.vividsolutions.jts.index.strtree.STRtree
 
 //import org.{ExtPoint, ExtPointRDD}
 
-
-/**
- * Hello world!
- *
- */
+import java.nio.file.{Paths, Files}
 
 object App {
 
@@ -40,19 +36,37 @@ object App {
 
   def main (arg: Array[String]) ={
 
-    val cores = 1000
+      var cores = 1
+      var tmp = "/"
+      var where = "/"
+
+      if (Files.exists(Paths.get("/mongo"))) {
+          where = "/mongo/log/colore/batch/"
+          cores = 100
+          tmp = "/mongo/log/tmp/"
+      }
+      else if (Files.exists(Paths.get("/home/ubuntu/"))) {
+          where = "/home/ubuntu/"
+          cores = 8
+          tmp = "/home/ubuntu/"
+      }
+      else {
+          println("where can I get fits files?")
+          System.exit(1)
+      }
+      val conf = new SparkConf().setMaster("local").setAppName("AGS").
+        set("spark.cores.max", s"$cores").
+        set("spark.local.dir", tmp).
+        set("spark.executor.memory", "200g").
+        set("spark.storageMemory.fraction", "0")
+
     val n = 1000000
     val parts = 100000
 
 
-    val conf = new SparkConf().setMaster("local").setAppName("My App").
-      set("spark.cores.max", "$cores").
-      set("spark.local.dir", "/mongo/log/tmp/").
-      set("spark.executor.memory", "200g").
-      set("spark.storageMemory.fraction", "0")
-	  val sc = new SparkContext(conf)
+    val sc = new SparkContext(conf)
 
-    println( "Hello World!" )
+    println( "AGS" )
     Logger.getLogger("org").setLevel(Level.WARN)
     Logger.getLogger("akka").setLevel(Level.WARN)
 
