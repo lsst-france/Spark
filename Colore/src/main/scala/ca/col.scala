@@ -87,7 +87,7 @@ object Colore {
 
       // def nextPoint = new ExtPoint(fact.createPoint(new Coordinate(ra, dec)), z, dz)
 
-      val rdd = df.rdd.map(x => ( x(0) )).take(10)
+      val rdd = df.rdd.map(x => (new ExtPoint(fact.createPoint(new Coordinate(x(0).asInstanceOf[Double], x(1).asInstanceOf[Double])), x(2).asInstanceOf[Double], x(3).asInstanceOf[Double]))).take(10).mkString("\n")
       println(rdd)
   }
 }
