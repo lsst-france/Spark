@@ -9,5 +9,5 @@ fi
 
 echo "jars=${jars}"
 
-# spark-submit --jars ${jars} --class "ca.Colore" target/scala-2.11/colore_2.11-1.0.jar
+spark-submit --jars ${jars} --class "ca.Colore" target/scala-2.11/colore_2.11-1.0.jar
 
