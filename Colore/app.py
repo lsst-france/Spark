@@ -35,7 +35,6 @@ spark = SparkSession\
        .builder\
        .appName("Colore")\
        .config("spark.local.dir={}".format(tmp))\
-       .config("spark.memory.fraction=0.8")\
        .getOrCreate()
 
 
