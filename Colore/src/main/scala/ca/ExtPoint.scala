@@ -7,22 +7,7 @@
 
 package ca
 
-import java.io.Serializable
-
 import com.vividsolutions.jts.geom.Point
-
-/*
-import org.datasyslab.geospark.enums.{GridType, IndexType}
-import java.io.Serializable
-import java.util
-import java.util.{ArrayList, Comparator, HashMap, HashSet, Iterator}
-
-import com.vividsolutions.jts.geom
-import com.vividsolutions.jts.geom.Geometry
-import com.vividsolutions.jts.geom.Envelope
-*/
-/*
- */
 
 class ExtPoint(point: Point, z: Double, dz: Double) extends Point(point.getCoordinateSequence, point.getFactory)
 {
