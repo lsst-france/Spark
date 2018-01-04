@@ -30,11 +30,14 @@ else:
 
 print("cores = ", cores)
 
+# 148 210 556
+# 134 217 728
 
 spark = SparkSession\
        .builder\
        .appName("Colore")\
        .config("spark.local.dir={}".format(tmp))\
+       .config("spark.rpc.message.maxSize:200m")\
        .getOrCreate()
 
 
@@ -83,45 +86,54 @@ Transpose the data table columns => rows
 Work upon a "subset" = % of the full data table
 And apply the transposition by blocks ("steps" = # blocks)
 """
-def build(data, subset, steps):
-  # will create a list of transposed arrays
-  points = []
-  subset = int(1.0 / subset)
+def build(sc, data, subset, steps):
+    # will create a list of transposed arrays
+    if subset <= 0:
+        return None
 
-  if subset <= 0:
-      return None
+    if subset > 1.0:
+        subset = 1.0
 
-  part = subset / steps
-  block = int((data.size / subset) / steps)
+    used_data_size = int(data.size * subset)
 
-  print("steps = ", steps, " part = ", part, " block = ", block, " total data = ", (block * steps))
+    points = None
 
+    block = int(used_data_size / steps)
 
-  for i in range(steps):
-    start = int(i * block)
-    ra = data['RA'][start:start+block]
-    dec = data['DEC'][start:start+block]
-    z = data['Z_COSMO'][start:start+block]
-    dz = data['DZ_RSD'][start:start+block]
+    print("steps = ", steps, " size = ", used_data_size, " block = ", block, " total data = ", data.size)
 
-    points.append(np.column_stack((ra, dec, z, dz)))
+    for i in range(steps):
+        start = int(i * block)
+        ra = data['RA'][start:start+block]
+        dec = data['DEC'][start:start+block]
+        z = data['Z_COSMO'][start:start+block]
+        dz = data['DZ_RSD'][start:start+block]
 
-    s.show_step("==> i={}".format(i))
+        p = np.column_stack((ra, dec, z, dz))
 
-  return np.concatenate(points)
+        # build a RDD from the transposed data.
+        r = sc.parallelize(p, 10000).map(lambda x: (float(x[0]), float(x[1]), float(x[2]), float(x[3])))
+        s.show_step("==> parallelize")
+
+        if points is None:
+            points = r
+        else:
+            points = points.union(r)
+
+        # points.append(np.column_stack((ra, dec, z, dz)))
+
+        s.show_step("==> i={}".format(i))
+
+    return points
+    # return np.concatenate(points)
 #=============================================
 
-allp = build(data, subset=1.0, steps=20)
+allp = build(sc, data, subset=1.0, steps=20)
 
 s1.show_step("==> total")
 
-# build a RDD from the transposed data. 
-rdd = sc.parallelize(allp, 100000).map(lambda x: (float(x[0]), float(x[1]), float(x[2]), float(x[3])))
-
-s1.show_step("==> parallelize")
-
 # lower the patitioning
-rdd = rdd.coalesce(100)
+rdd = allp.coalesce(1000)
 
 s1.show_step("==> coalesce")
 

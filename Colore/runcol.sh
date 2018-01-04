@@ -9,5 +9,8 @@ fi
 
 echo "jars=${jars}"
 
-spark-submit --jars ${jars} --class "ca.Colore" target/scala-2.11/colore_2.11-1.0.jar
+JAVAOPTS="-XX:+PrintGCDetails -XX:+PrintGCTimeStamps -Xms512M -Xmx2048M -XX:MaxPermSize=2048M -XX:+CMSClassUnloadingEnabled"
+JAVAOPTS="-XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:MaxPermSize=2048M -XX:+CMSClassUnloadingEnabled"
+
+spark-submit --jars ${jars} --conf "spark.executor.extraJavaOptions=$JAVAOPTS" --class "ca.Colore" target/scala-2.11/colore_2.11-1.0.jar
 
