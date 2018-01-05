@@ -1,7 +1,13 @@
-https://www.google.fr/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1&cad=rja&uact=8&ved=0ahUKEwjJ64KstovXAhWBiRoKHfyPBNsQFggpMAA&url=https%3A%2F%2Fwww.packtpub.com%2Fsites%2Fdefault%2Ffiles%2Fdownloads%2FInstallingSpark.pdf&usg=AOvVaw1XecHPDBe8IAbF5z-GURnu
+# some docs to install Spark
+# 
+# https://www.google.fr/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1&cad=rja&uact=8&ved=0ahUKEwjJ64KstovXAhWBiRoKHfyPBNsQFggpMAA&url=https%3A%2F%2Fwww.packtpub.com%2Fsites%2Fdefault%2Ffiles%2Fdownloads%2FInstallingSpark.pdf&usg=AOvVaw1XecHPDBe8IAbF5z-GURnu
+# 
+# https://www.packtpub.com/sites/default/files/downloads/InstallingSpark.pdf
 
-https://www.packtpub.com/sites/default/files/downloads/InstallingSpark.pdf
 
+#
+# A procedure to install Spark on an OpenStack VM
+#
 
 SPARK_VERSION="2.2.0"
 HADOOP_VERSION="2.7"
@@ -29,8 +35,7 @@ sudo apt install scala
 # .bashrc
 export PATH=/home/ubuntu/anaconda3/bin/:$PATH
 
-
-## wget https://d3kbcqa49mib13.cloudfront.net/spark-2.2.0-bin-hadoop2.7.tgz
+# Spark itself
 wget https://d3kbcqa49mib13.cloudfront.net/spark-2.2.0-bin-hadoop2.7.tgz
 tar xzvf spark-2.2.0.tgz 
 rm spark-2.2.0.tgz 
@@ -41,7 +46,7 @@ cd spark
 ./build/mvn -DskipTests clean package -Phive
 ./python/run-tests --python-executables=python
 
-
+# Firefox
 sudo apt install firefox
 
 # DISK EXTERN
@@ -62,11 +67,11 @@ sudo ln -fs /usr/lib/sbt/sbt-0.13.9/bin/sbt /usr/bin/sbt
 #Need to run this to download needed jar files
 sbt -version
 
-#Clean up
+# Clean up
 rm sbt-0.13.9.tgz
 
-vi .bashrc
-...
+# vi .bashrc
+# ...
 export PATH=/usr/lib/jvm/java-1.8.0-openjdk-amd64/bin:$PATH
 
 # added by Anaconda3 installer
