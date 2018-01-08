@@ -1,8 +1,8 @@
 package ca
 
-object TScala {
-  def main(args: Array[String]): Unit = {
-    println("TScala")
+object TScala extends App {
+  def main(s: String): String =
+  {
+    return s
   }
-
 }
