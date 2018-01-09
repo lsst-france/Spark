@@ -5,7 +5,7 @@ Spark
 .. contents:: **Table of Contents**
 
 How to install Spark: JDK and Spark
-==
+====
 
 You first need the Java Development Kit (JDK). Be aware that Spark is not
 running with the latest JDK (9), so you need JDK 8 or earlier. You can
@@ -44,6 +44,6 @@ or
   spark-shell # scala
 
 How to use Spark: basics
-==
+====
 
 See `here <http://spark.apache.org/docs/latest/quick-start.html>`_.
