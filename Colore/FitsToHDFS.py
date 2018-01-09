@@ -2,6 +2,8 @@
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 
+from pyspark import StorageLevel
+
 import os
 from astropy.io import fits
 import numpy as np
@@ -27,8 +29,33 @@ else:
     print('where can I get fits files?')
     exit()
 
+parser = argparse.ArgumentParser()
+parser.add_argument('-subset', type=int, default=100, help='subset of the data from the FITS file')
+parser.add_argument('-executor', default='1g', help='executor memory')
+parser.add_argument('-driver', default='1g', help='driver memory')
+parser.add_argument('-partitions', type=int, default='1000', help='partitions')
+parser.add_argument('-coalesce', type=int, default='1000', help='coalesce')
+parser.add_argument('-steps', type=int, default='20', help='steps')
+parser.add_argument('-message', default='200m', help='message')
+parser.add_argument('-output', default='colore', help='output data area')
+parser.add_argument('-cores', type=int, default='{}'.format(cores), help='cores')
+
+
+args = parser.parse_args()
 
 print("cores = ", cores)
+
+print("subset = ", args.subset)
+print("executor = ", args.executor)
+print("driver = ", args.driver)
+print("partitions = ", args.partitions)
+print("coalesce = ", args.coalesce)
+print("steps = ", args.steps)
+print("message = ", args.message)
+print("output = ", args.output)
+print("cores = ", args.cores)
+
+# exit()
 
 # 148 210 556
 # 134 217 728
@@ -37,8 +64,11 @@ spark = SparkSession\
        .builder\
        .appName("Colore")\
        .config("spark.local.dir={}".format(tmp))\
-       .config("spark.rpc.message.maxSize:200m")\
-       .getOrCreate()
+       .config("spark.rpc.message.maxSize:{}".format(args.message)) \
+       .config("spark.executor.memory={}".format(args.executor))\
+       .config("spark.driver.memory={}".format(args.driver)) \
+       .config("spark.cores.max", "{}".format(args.cores)) \
+    .getOrCreate()
 
 
 """
@@ -46,8 +76,7 @@ spark = SparkSession\
        .config("spark.memory.fraction=0.8")\
        .config("spark.storage.memoryFraction=0")\
 
-       .config("spark.cores.max", "{}".format(cores))\
-       .config("spark.executor.memory=20g") \
+       
 """
 
 # df.write.mode("overwrite").save("./images")
@@ -86,15 +115,16 @@ Transpose the data table columns => rows
 Work upon a "subset" = % of the full data table
 And apply the transposition by blocks ("steps" = # blocks)
 """
+
 def build(sc, data, subset, steps):
     # will create a list of transposed arrays
     if subset <= 0:
         return None
 
-    if subset > 1.0:
-        subset = 1.0
+    if subset > 100:
+        subset = 100
 
-    used_data_size = int(data.size * subset)
+    used_data_size = int(data.size * subset / 100.0)
 
     points = None
 
@@ -112,7 +142,7 @@ def build(sc, data, subset, steps):
         p = np.column_stack((ra, dec, z, dz))
 
         # build a RDD from the transposed data.
-        r = sc.parallelize(p, 10000).map(lambda x: (float(x[0]), float(x[1]), float(x[2]), float(x[3])))
+        r = sc.parallelize(p, args.partitions).map(lambda x: (float(x[0]), float(x[1]), float(x[2]), float(x[3])))
         s.show_step("==> parallelize")
 
         if points is None:
@@ -128,12 +158,12 @@ def build(sc, data, subset, steps):
     # return np.concatenate(points)
 #=============================================
 
-allp = build(sc, data, subset=1.0, steps=20)
+allp = build(sc, data, subset=args.subset, steps=args.steps)
 
 s1.show_step("==> total")
 
 # lower the patitioning
-rdd = allp.coalesce(1000)
+rdd = allp.coalesce(args.coalesce)
 
 s1.show_step("==> coalesce")
 
@@ -142,10 +172,20 @@ df = rdd.toDF(['RA', 'DEC', 'Z', 'DZ'])
 
 s1.show_step("==> dataframe")
 
+"""
+# size = sc._jvm.org.apache.spark.util.SizeEstimator.estimate(rdd)
+
+df.persist(StorageLevel.MEMORY_ONLY)
+size = df.count()
+df.unpersist()
+
+print("size = ", size)
+"""
+
 print(df.show(10))
 
 # save the result
-df.write.mode("overwrite").save("./colore")
+df.write.mode("overwrite").save("./{}".format(args.output))
 
 s1.show_step('write data')
 
