@@ -20,7 +20,7 @@ If you have several java versions installed, you can set it using
 
 ::
 
-   export JAVA_HOME=`/path/to/java_home -v <number of the version>`
+   export JAVA_HOME=`/path/to/java_home -v <version number>`
 
 Once JDK is installed (again JDK 8 or earlier), you can install Spark.
 The easiest and cleanest way is via pip
@@ -31,7 +31,7 @@ The easiest and cleanest way is via pip
 
 Alternatively, you can `download <https://spark.apache.org/downloads.html>`_
 Spark and link it (or use you favourite package installer).
-You can test that the installation by launching Spark interactively
+You can test Spark by launching it interactively
 
 ::
 
