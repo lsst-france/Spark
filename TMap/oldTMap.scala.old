@@ -1,0 +1,224 @@
+package ca
+
+import org.apache.spark.{HashPartitioner, Partitioner, SparkConf, SparkContext}
+import java.nio.file.{Files, Paths}
+import java.util
+
+import org.apache.spark.sql.{DataFrame, Row, SQLContext}
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.types.{FloatType, StructField, StructType}
+
+import scala.collection.immutable.NumericRange
+
+case class Point (val ra: Float, val dec: Float, val z: Float)
+
+object TMap {
+
+  // def get_rdd(sc: SparkContext, n: Int = 1000, partitions: Int = 1000): RDD[(Float, Float, Float)] = {
+  // def get_rdd(sc: SparkContext, n: Long = 1000, partitions: Int = 1000): RDD[Row] = {
+  def get_rdd(sc: SparkContext, n: Long = 1000, partitions: Int = 1000): Unit = {
+
+    println(s"n=$n")
+    val maxBlockSize: Long = 64 * 1024 * 1024
+
+    val r = scala.util.Random
+
+    def fra = r.nextFloat()
+    def fdec = r.nextFloat()
+    def fz = r.nextFloat()
+
+    val context = new SQLContext(sc)
+    val spark = context.sparkSession
+
+    var first = true
+
+    val elem_size: Long = 3 * 4
+    val all_size = elem_size * n
+
+    val blocks = (all_size/maxBlockSize) + 1
+    val block_size = elem_size * maxBlockSize
+    val last_block_size = all_size - ((block_size - 1) * maxBlockSize)
+
+    println(s"Blocks $blocks ($all_size = $elem_size x $n = $blocks x $maxBlockSize)")
+
+    for (block <- NumericRange[Long](1L, blocks, 1L)){
+      println(s"Handling block $block of $blocks")
+
+      var size = maxBlockSize
+      if (block == blocks) size = last_block_size
+
+      println(s"Block $block/$blocks/$size ($all_size = $elem_size x $n = $blocks x $maxBlockSize)")
+
+      import scala.concurrent.ExecutionContext.Implicits.global
+
+      val points = new util.ArrayList[Row]()
+      time("Creating points", for (i <- NumericRange[Long](1L, size, 1L)) { points.add(Row(fra, fdec, fz)) })
+
+      // val points = for (i <- NumericRange[Long](1L, size, 1L)) yield Row(fra, fdec, fz)
+
+      println(s"Finished generating points ${points.size}")
+
+      //val rdd = sc.parallelize(points, 1)
+
+      val schema = StructType(List(StructField("_1", FloatType, false)
+        , StructField("_2", FloatType, false)
+        , StructField("_3", FloatType, false)))
+
+      val df = time("create data frame", spark.createDataFrame(points, schema))
+
+      println(s"df: ${df.count}")
+
+      /*
+      if (first)
+        {
+          df.write.mode("overwrite").save("./temp")
+          first = false
+        }
+      else
+        {
+          df.write.mode("append").save("./temp")
+        }
+        */
+    }
+
+    // context.read.load("./temp").rdd
+  }
+
+  def get_df(sc: SparkContext, n: Int = 1000): DataFrame = {
+    val context = new SQLContext(sc)
+    context.read.load("./temp")
+  }
+
+  /*
+  def test1(sc: SparkContext): Unit = {
+    val rdd = get_rdd(sc, 100)
+
+    val mapped = rdd.mapPartitionsWithIndex{
+      // 'index' represents the Partition No
+      // 'iterator' to iterate through all elements
+      //                         in the partition
+      (index, iterator) => {
+        println("Called in Partition -> " + index)
+        val myList = iterator.toList
+        // In a normal user case, we will do the
+        // the initialization(ex : initializing database)
+        // before iterating through each element
+        myList.map(x => x + " -> " + index).iterator
+      }
+    }
+
+    val out = mapped.collect()
+
+    println(out)
+  }
+  */
+
+  def findRankStatistics(dataFrame: DataFrame,
+                         ranks: List[Long]): Map[Int, Iterable[Float]] = {
+
+    /*
+    dataFrame: fournit des rows constitués de (f, f, f) (N valeurs Float)
+    ranks donne une liste de positions dans un index
+
+    colonne par colonne, on va:
+
+      - trier les valeurs
+      - sélectionner le valeurs triées dont le rang correspond aux rangs demandés par ranks
+      - produire une liste des valeurs sélectionnées
+
+    on retourne N liste
+     */
+
+    require(ranks.forall(_ > 0))
+
+    val numberOfColumns = dataFrame.schema.length
+
+    println("findRankStatistics", ranks.toString(), numberOfColumns)
+
+    var result = Map[Int, Iterable[Float]]()
+
+    var i = 0
+    while (i < numberOfColumns) {
+      val col = dataFrame.rdd.map(row => row.getFloat(i))
+      val sortedCol: RDD[(Float, Long)] = col.sortBy(v => v).zipWithIndex()
+      println("----------------\n", i, col.collect.toList.toString())
+      println(sortedCol.collect.toList.toString())
+
+      val ranksOnly = sortedCol.filter {
+        //rank statistics are indexed from one. e.g. first element is 0
+        case (colValue, index) => ranks.contains(index + 1)
+      }
+      println(ranksOnly.collect.toList.toString())
+      println(ranksOnly.keys.collect.toList.toString())
+
+      val list = ranksOnly.keys.collect
+      result += (i -> list)
+      val t = (i -> list)
+
+      i += 1
+    }
+
+    result
+  }
+
+  def test2(sc: SparkContext): Unit = {
+    val df = get_df(sc, 10)
+    val result = time("findRankStatistics", findRankStatistics(df, List(1,  3)))
+
+    println("====> ", result.toString)
+  }
+
+  def test3(sc: SparkContext): Unit = {
+
+    class Grid(num: Int) extends(Partitioner) {
+      override def numPartitions: Int = num
+
+      override def getPartition(key: Any): Int = {
+        (key.asInstanceOf[Float] * num).toInt
+      }
+    }
+
+    // val rdd = get_rdd(sc, n = 1 * 1000 * 1000, partitions = 100)
+    get_rdd(sc, n = 10 * 1000 * 1000, partitions = 100)
+
+    // val rdd2 = rdd.map(x => (x._1, x))
+
+    // println("2====> ", rdd2.collect.toList.toString)
+
+    // val rdd3 = rdd.partitionBy(new Grid(10000))
+    // println("3====> ", rdd3.collect.toList.toString)
+
+    /*
+    val mapped = rdd2.mapPartitionsWithIndex{
+      (index, iterator) => {
+        val myList = iterator.toList
+        // println("Called in Partition -> " + index)
+        myList.map(x => x + " -> " + index).iterator
+      }
+    }
+
+    val out = rdd.count()
+
+    println(out)
+    */
+  }
+
+  def test4(sc: SparkContext): Unit = {
+  }
+
+  def test5(sc: SparkContext): Unit = {
+  }
+
+  def main(args: Array[String]) {
+    println("TMap")
+
+    val sc = init()
+
+    // test1(sc)
+    // test2(sc)
+    time("test", test3(sc))
+
+    test4(sc)
+    test5(sc)
+  }
+}

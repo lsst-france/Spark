@@ -1,0 +1,25 @@
+
+taille de block 64 x 1024 x 1024
+Block 1/18/67108864 (1 200 000 000 = 12 x 100000000 = 18 x 67108864)
+
+=============================================
+
+	--driver-memory 30g --executor-memory 34g --executor-cores 17 --total-executor-cores 102 \
+
+=============================================
+
+taille de block 128 x 1024 x 1024
+
+Block 1/9/134217728 (1 200 000 000 = 12 x 100 000 000 = 9 x 134217728)
+
+	--driver-memory 30g --executor-memory 34g --executor-cores 17 --total-executor-cores 102 \
+
+=> error
+
+=============================================
+
+taille de block 64 x 1024 x 1024
+Block 1/26/67108864 (1 705 032 704 = 12 x 500 000 000 = 26 x 67108864)
+	--driver-memory 30g --executor-memory 34g --executor-cores 17 --total-executor-cores 102 \
+
+
