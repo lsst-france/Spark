@@ -93,31 +93,32 @@ object TMap{
     }
 
     override def toString: String = {
+      val low = 2
       var t = ""
-      for ( ((k, v), i) <- data.zipWithIndex if i < 10) t += s"k=$k v=[${dataToString(v)}]\n"
-      if (data.size > 10)
+      for ( ((k, v), i) <- data.zipWithIndex if i < low) t += s"k=$k v=[${dataToString(v)}]\n"
+      if (data.size > 2)
         {
           t += s"...${data.size}\n"
         }
 
-      val zone = Geom(Position(0.5F, 0.5F), 0.01F)
-      val c = data.filter(x => x._2.size > 10).size
+      // val zone = Geom(Position(0.5F, 0.5F), 0.01F)
+      // val c = data.filter(x => x._2.size > 10).size
 
-      t + s"   c = $c\n"
+      //t + s"   c = $c\n"
+      s"$t\n"
     }
 
     def test: String = {
       // toString
-      val zone = Geom(Position(0.5F, 0.5F), 0.01F)
-      val c = data.filter(x => x._2.size > 10).size
-      s"c = $c\n"
+      val zone = Geom(Position(0.5F, 0.6F), 0.0005F)
+      val c = data.filter(_._2.filter(zone.contains(_)).size > 0)
+      s"\nc = ${c}\n"
     }
 
-    /*
-    def filter(f(point: Point) => Boolean): Points = {
-      data.map(x => x._2.filter(f(_)))
+    def filter(zone: Geom) = {
+      data.map((x) => x._2.filter(x => zone.contains(x))).filter(_.size > 0)
+      //).filter(_.size > 0)
     }
-    */
   }
 
   def simple_build(sc: SparkContext, n: Long): Unit ={
@@ -144,7 +145,7 @@ object TMap{
 
     println(s"100=$pointsSize100, 200=$pointsSize200 PointSize=$pointSizeInBlock HeaderSize=$headerSize")
 
-    val maxPartitionSize = 16 * 1024 * 1024
+    val maxPartitionSize = 64 * 1024 * 1024
     val maxPointCount = ((maxPartitionSize - headerSize) / pointSizeInBlock).toInt
     val blocks = (n / maxPointCount).toInt + 1
     val partitions = blocks
@@ -160,12 +161,12 @@ object TMap{
 
     val rdd = sc.parallelize(1 to blocks.toInt, partitions.toInt)
       .map(x => Points(realN.toInt, g))
-      // .map(x => x.test)
-      // .map(x => (x.data.size))
+      .map(x => x.filter(zone))
 
-    val result = TMapUtils.time(s"Finished generating $n points", rdd.take(1) )
+    val result = TMapUtils.time(s"Finished generating $n points", rdd.count )
 
-    for (x <- result) println(s"result = $x")
+    // for (x <- result) println(s"result = $x")
+    println(s"result = $result")
 
 
     /*
@@ -193,11 +194,20 @@ object TMap{
       TMapUtils.time(s"Build ${n}", simple_build(sc, n))
     }
     else {
-      val n = 100
+      val nBlocks = 10 * 1000
+      val nPoints = 100 * 1000
       val g = 10
-      val p = TMapUtils.time(s"$n Points", Points(n, Grid(g, g)))
+      val p = TMapUtils.time(s"$nBlocks blocks | $nPoints Points",
+        {
+          val zone = Geom(Position(0.5F, 0.6F), 0.0005F)
 
-      for ((k, v) <- p.data) println(s"key=$k value=$v")
+          val blocks = for (i <- 0 to nBlocks) yield Points(nPoints, Grid(g, g))
+
+          blocks.map(x => x.data.map((x) => x._2.filter(x => zone.contains(x))).filter(_.size > 0)).filter(_.size > 0)
+        })
+
+      p.foreach {println}
+      // for ((k, v) <- p.data) println(s"key=$k value=$v")
     }
   }
 }
