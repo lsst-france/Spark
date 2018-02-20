@@ -1,21 +1,27 @@
-
-import org.apache.spark.{SparkConf, SparkContext}
-import org.apache.spark.{HashPartitioner, Partitioner, SparkConf, SparkContext}
-import java.nio.file.{Files, Paths}
-import java.util
-
-import org.apache.spark.sql.{DataFrame, Row, SQLContext}
-import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.types.{FloatType, StructField, StructType}
-import org.apache.spark.util.SizeEstimator
-
-
-object TMap {
+object TMap{
 
   val r = scala.util.Random
   def fra = r.nextFloat()
   def fdec = r.nextFloat()
   def fz = r.nextFloat()
+
+  def longRange(first: Long, last: Long) = new Iterator[Long] {
+    private var i = first
+    def hasNext = i < last
+    def next = {val r = i; i += 1; r}
+  }
+
+  def test_lr = {
+    var i: Long = 0
+    val b = 1 * 1000 * 1000 * 1000L
+    for (i <- longRange(0L, 10 * b))
+    {
+      if ((i % b) == 0)
+      {
+        println(s"$i ${i % b}")
+      }
+    }
+  }
 
   case class Position(ra: Float, dec: Float)
   case class Point(ra: Float, dec: Float, z: Float)
@@ -24,6 +30,16 @@ object TMap {
     override def toString: String = {s"[$indexX:$indexY]"}
   }
 
+  case class Geom(center: Position, radius: Float) {
+    def contains(point: Point) = {
+      val xra = point.ra - center.ra
+      val xdec = point.dec - center.dec
+
+      val r = scala.math.sqrt((xra*xra + xdec*xdec).toDouble).toFloat
+
+      r <= radius
+    }
+  }
   case class Grid(rangeX: Int, rangeY: Int) {
 
     def index(x: Float, y: Float): Option[GridIndex] = {
@@ -41,7 +57,13 @@ object TMap {
   }
 
   case class Block(n: Int, grid: Grid) {
-    val data = (for (i <- 0 to n) yield Point(fra, fdec, fz)).groupBy(x => grid.index(x.ra, x.dec))
+    def r = Point(fra, fdec, fz)
+    def g = {
+      val ra = fra
+      val dec = fdec
+      (grid.index(ra, dec), Point(ra, dec, fz))
+    }
+    val data = (for(i <- 0 to n) yield Point(fra, fdec, fz)).groupBy(x => grid.index(x.ra, x.dec))
 
     def dataToString(v: Seq[Point]): String = {
       val low = 2
@@ -60,9 +82,9 @@ object TMap {
       var t = ""
       for ( ((k, v), i) <- data.zipWithIndex if i < low) t += s"k=$k v=[${dataToString(v)}]\n"
       if (data.size > 2)
-      {
-        t += s"...${data.size}\n"
-      }
+        {
+          t += s"...${data.size}\n"
+        }
 
       // val zone = Geom(Position(0.5F, 0.5F), 0.01F)
       // val c = data.filter(x => x._2.size > 10).size
@@ -70,17 +92,21 @@ object TMap {
       //t + s"   c = $c\n"
       s"$t\n"
     }
+
+    def filter(zone: Geom) = {
+      data.map((x) => x._2.filter(x => zone.contains(x))).filter(_.size > 0)
+    }
   }
 
-  def buildData(sc: SparkContext, n: Long): Unit = {
-    println(s"Build data n=$n")
+  def simple_build(sc: SparkContext, n: Long): Unit ={
+    println(s"Simple build n=$n")
 
     // on va travailler en terme de array[array] puisque on ne sait pas aller au-delà de 2G bytes
 
     // taille en bytes d'un Point
     val Blockize = SizeEstimator.estimate(Point(0, 0, 0))
 
-    // estimation de la taille dans un Array
+    // estimation de la taille dans des collections de Points dans un Block
 
     val g = Grid(10, 10)
 
@@ -108,13 +134,25 @@ object TMap {
 
     println(s"maxPointCount=$maxPointCount blockSize=$blockSize blocks=$blocks realN=$realN parts=$partitions")
 
+    val zone = Geom(Position(0.5F, 0.5F), 0.01F)
+
     val rdd = sc.parallelize(1 to blocks.toInt, partitions.toInt)
+      .map(x => Block(realN.toInt, g))
+      // .map(x => x.filter(zone))
 
-    println(rdd.count())
+    val result = TMapUtils.time(s"Finished generating $n Block", rdd.count )
 
+    // for (x <- result) println(s"result = $x")
+    println(s"result = $result")
+
+
+    /*
+    result.
+    for ( (k, v) <- result.data) println(s"k=$k v=$v")
+    */
   }
 
-    def main(args: Array[String]) {
+  def main(args: Array[String]) {
     println("TMap")
 
     // test_lr
@@ -128,27 +166,25 @@ object TMap {
 
       // val sc = null
 
-      val n = 1000 * 1000L
+      val n = 100 * 1000 * 1000L
 
-      TMapUtils.time(s"Build ${n}", buildData(sc, n))
+      TMapUtils.time(s"Build ${n}", simple_build(sc, n))
     }
     else {
-      val nBlocks = 1000
-      val nBlock = 1000
+      val nBlocks = 10 * 1000
+      val nBlock = 100 * 1000
       val g = 10
       val p = TMapUtils.time(s"$nBlocks blocks | $nBlock Block",
         {
-          // val zone = Geom(Position(0.5F, 0.6F), 0.0005F)
+          val zone = Geom(Position(0.5F, 0.6F), 0.0005F)
 
           val blocks = for (i <- 0 to nBlocks) yield Block(nBlock, Grid(g, g))
 
-          // blocks.map(x => x.data.map((x) => x._2.filter(x => zone.contains(x))).filter(_.size > 0)).filter(_.size > 0)
+          blocks.map(x => x.data.map((x) => x._2.filter(x => zone.contains(x))).filter(_.size > 0)).filter(_.size > 0)
         })
 
-      println(p)
-      // p.foreach {println}
+      p.foreach {println}
       // for ((k, v) <- p.data) println(s"key=$k value=$v")
     }
   }
-
 }

@@ -40,9 +40,9 @@ object TMapUtils {
 
     val conf = new SparkConf().setMaster("spark://134.158.75.222:7077")
       .setAppName("TMap")
-      .set("spark.kryoserializer.buffer.max", "1024m")
-      .set("spark.storageMemory.fraction", "0.8")
-      .set("spark.local.dir", tmp)
+      // .set("spark.kryoserializer.buffer.max", "1024m")
+      // .set("spark.storageMemory.fraction", "0.8")
+      // .set("spark.local.dir", tmp)
 
     /*
       set("spark.storageMemory.fraction", "0")
