@@ -74,8 +74,14 @@ Example with matplotlib
 sbt
 ---
 
+We suppose that we got jep from "pip install --user jep". Then build.sbt will look like:
+
     name := "testjep"
     version := "0.1"
     scalaVersion := "2.11.8"
+    
+    unmanagedBase := file("/home/christian.arnault/.local/lib/python3.5/site-packages/jep")
+    
 
     > sbt clean assembly "runMain ca.Tester"
+
