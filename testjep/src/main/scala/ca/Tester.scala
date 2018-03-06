@@ -47,6 +47,25 @@ object Tester {
 
   }
 
+  def plot: Unit = {
+    println("plot")
+    val jep = new Jep(new JepConfig().addSharedModules("numpy", "matplotlib"))
+
+    jep.eval("import numpy as np")
+    jep.eval("import matplotlib")
+    jep.eval("matplotlib.use('Agg')")
+    jep.eval("import matplotlib.pyplot as plt")
+
+    jep.eval("t = np.arange(0.0, 2.0, 0.01)")
+    jep.eval("s = 1 + np.sin(2 * np.pi * t)")
+
+    jep.eval("fig, ax = plt.subplots()")
+    jep.eval("ax.plot(t, s)")
+
+    jep.eval("fig.savefig('test')")
+
+  }
+
   def tnumpy: Unit = {
     println("tnumpy")
     val jep = new Jep(new JepConfig().addSharedModules("numpy"))
@@ -89,8 +108,9 @@ object Tester {
 
   def main(args: Array[String]): Unit = {
     println("hello")
-    //testjep
-    //tnumpy
-    bench
+    // testjep
+    // tnumpy
+    // bench
+    plot
   }
 }

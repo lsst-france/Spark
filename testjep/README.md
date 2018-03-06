@@ -40,3 +40,34 @@ Result of the bench:
     getValue(z.shape)>           Elapsed time: 11.224750006 µs
     xfer array                   Elapsed time: 14.170212113 ms
 
+Example with matplotlib
+-----------------------
+
+
+import jep._
+
+object Tester {
+
+  def plot: Unit = {
+    println("plot")
+    val jep = new Jep(new JepConfig().addSharedModules("numpy", "matplotlib"))
+
+    jep.eval("import numpy as np")
+    jep.eval("import matplotlib")
+    jep.eval("matplotlib.use('Agg')")
+    jep.eval("import matplotlib.pyplot as plt")
+
+    jep.eval("t = np.arange(0.0, 2.0, 0.01)")
+    jep.eval("s = 1 + np.sin(2 * np.pi * t)")
+
+    jep.eval("fig, ax = plt.subplots()")
+    jep.eval("ax.plot(t, s)")
+
+    jep.eval("fig.savefig('test')")
+  }
+
+  def main(args: Array[String]): Unit = {
+    plot
+  }
+}
+    
