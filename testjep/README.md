@@ -71,3 +71,11 @@ Example with matplotlib
       }
     }
     
+sbt
+---
+
+    name := "testjep"
+    version := "0.1"
+    scalaVersion := "2.11.8"
+
+    > sbt clean assembly "runMain ca.Tester"
